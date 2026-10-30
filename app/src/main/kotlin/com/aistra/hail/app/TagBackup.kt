@@ -174,10 +174,8 @@ internal object TagBackupArchive {
     private fun classifyEntry(path: String): String? {
         val name = path.replace('\\', '/').trimStart('/')
         return when {
-            name == "tags.json" || name == "v1/tags.json" ||
-                name == "files/v1/tags.json" || name.endsWith("/files/v1/tags.json") -> "tags.json"
-            name == "apps.json" || name == "v1/apps.json" ||
-                name == "files/v1/apps.json" || name.endsWith("/files/v1/apps.json") -> "apps.json"
+            name == "tags.json" || name == "v1/tags.json" || name.endsWith("/v1/tags.json") -> "tags.json"
+            name == "apps.json" || name == "v1/apps.json" || name.endsWith("/v1/apps.json") -> "apps.json"
             name == "manifest.json" || name == "v1/manifest.json" -> "manifest.json"
             else -> null
         }

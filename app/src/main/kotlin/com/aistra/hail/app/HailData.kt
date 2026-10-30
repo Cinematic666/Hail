@@ -231,14 +231,14 @@ object HailData {
         })) { "Could not save tags.json" }
     }
 
-    fun createTagBackup(): TagBackup = TagBackup(
+    internal fun createTagBackup(): TagBackup = TagBackup(
         tags = tags.map { TagBackupTag(it.first, it.second) },
         apps = checkedList.map {
             TagBackupApp(it.packageName, it.tagIdList.toList(), it.pinned, it.whitelisted)
         }
     )
 
-    fun importTagBackup(backup: TagBackup) {
+    internal fun importTagBackup(backup: TagBackup) {
         val existing = checkedList.map {
             TagBackupAppState(it.packageName, it.pinned, it.whitelisted, it.tagIdList.toList())
         }
