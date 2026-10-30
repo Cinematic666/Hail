@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hail</string>
+    <string name="app_name">Hail Enhanced</string>
     <string name="app_slogan">Freezedom!</string>
     <string name="title_home">Главная</string>
     <string name="title_apps">Приложения</string>
@@ -158,4 +158,26 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="xposed_description">Авторазморзка приостановленных приложений изолированного профиля</string>
+
+    <string name="action_manage_tags">Управление тегами</string>
+    <string name="action_tag_rename">Переименовать тег</string>
+    <string name="action_save">Сохранить</string>
+    <string name="tag_editor_hint">Перетаскивайте теги за значок или используйте стрелки. Тег «По умолчанию» всегда остаётся первым.</string>
+    <string name="tag_move_up">Переместить тег вверх</string>
+    <string name="tag_move_down">Переместить тег вниз</string>
+    <string name="tag_edit">Переименовать тег</string>
+    <string name="tag_delete">Удалить тег</string>
+    <string name="tag_drag">Изменить порядок тега</string>
+    <string name="tag_default_locked">Тег «По умолчанию» закреплён первым</string>
+    <string name="tag_name_required">Введите название тега</string>
+    <string name="tag_duplicate_name">Тег с таким названием уже существует</string>
+    <string name="tag_duplicate_id">Не удалось создать уникальный идентификатор тега</string>
+    <string name="tag_delete_confirm">Удалить тег «%1$s»? Его привязки будут удалены. Приложения без других тегов будут удалены с главной страницы.</string>
+    <plurals name="tag_app_count">
+        <item quantity="one">%d приложение</item>
+        <item quantity="few">%d приложения</item>
+        <item quantity="many">%d приложений</item>
+        <item quantity="other">%d приложения</item>
+    </plurals>
+
 </resources>

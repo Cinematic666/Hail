@@ -30,8 +30,31 @@ class HomeFragment : MainFragment() {
         TabLayoutMediator(binding.tabs, binding.pager) { tab, position ->
             tab.text = tags[position].first
         }.attach()
+        binding.tabs.post { bindTagLongPress() }
         binding.tabs.applyDefaultInsetter { paddingRelative(isRtl, start = !activity.isLandscape, end = true) }
         return binding.root
+    }
+
+    fun selectedTagId(): Int = tags.getOrNull(binding.pager.currentItem)?.second ?: 0
+
+    fun refreshTags(preferredTagId: Int?) {
+        val pagerAdapter = binding.pager.adapter as? HomeAdapter ?: return
+        pagerAdapter.notifyDataSetChanged()
+        binding.tabs.isVisible = tags.size > 1
+        binding.tabs.post {
+            bindTagLongPress()
+            val position = tags.indexOfFirst { it.second == preferredTagId }
+            binding.pager.setCurrentItem(position.takeIf { it >= 0 } ?: 0, false)
+        }
+    }
+
+    private fun bindTagLongPress() {
+        for (position in 0 until binding.tabs.tabCount) {
+            binding.tabs.getTabAt(position)?.view?.setOnLongClickListener {
+                if (isResumed) TagEditorDialog(this).show()
+                true
+            }
+        }
     }
 
     override fun onDestroyView() {

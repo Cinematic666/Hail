@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Hail</string>
+    <string name="app_name">Hail Enhanced</string>
     <string name="app_slogan">Freezedom!</string>
     <string name="title_home">Home</string>
     <string name="title_apps">Apps</string>
@@ -154,4 +154,24 @@
     <string name="follow_system">Follow system</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+
+    <string name="action_manage_tags">Manage tags</string>
+    <string name="action_tag_rename">Rename tag</string>
+    <string name="action_save">Save</string>
+    <string name="tag_editor_hint">Drag tags using the handle or use the arrows. The Default tag always stays first.</string>
+    <string name="tag_move_up">Move tag up</string>
+    <string name="tag_move_down">Move tag down</string>
+    <string name="tag_edit">Rename tag</string>
+    <string name="tag_delete">Delete tag</string>
+    <string name="tag_drag">Reorder tag</string>
+    <string name="tag_default_locked">The Default tag is pinned first</string>
+    <string name="tag_name_required">Enter a tag name</string>
+    <string name="tag_duplicate_name">A tag with this name already exists</string>
+    <string name="tag_duplicate_id">Could not create a unique tag identifier</string>
+    <string name="tag_delete_confirm">Delete “%1$s”? Its assignments will be removed. Apps with no other tags will be removed from the home list.</string>
+    <plurals name="tag_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+
 </resources>

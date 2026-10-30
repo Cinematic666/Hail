@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Hail"
+rootProject.name = "Hail Enhanced"
 include(":app")

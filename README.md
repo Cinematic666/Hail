@@ -245,3 +245,18 @@ use [Weblate](https://hosted.weblate.org/engage/hail/).
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+## Hail Enhanced — test build
+
+This fork contains an optional tag editor based on the upstream Hail v1.11.0 release.
+
+- Separate application ID: `com.aistra.hail.enhanced`
+- Original Hail remains independently installable.
+- Drag-and-drop and arrow controls reorder custom tags.
+- The built-in Default tag remains pinned at the first position.
+- Renaming keeps the tag ID stable, so app assignments are preserved.
+- Deleting a tag removes only that tag assignment; apps with other tags remain.
+- The editor is available from the home screen overflow menu and by long-pressing a tab.
+
+This is an unofficial test build. It is not endorsed by the upstream Hail maintainer. Source remains under GPL-3.0; see LICENSE.

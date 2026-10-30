@@ -18,11 +18,11 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.aistra.hail"
+        applicationId = "com.aistra.hail.enhanced"
         minSdk = 23
         targetSdk = 36
-        versionCode = 35
-        versionName = "1.11.0"
+        versionCode = 111001
+        versionName = "1.11.0-enhanced.1"
     }
 
     buildTypes {
@@ -67,7 +67,7 @@ androidComponents {
     onVariants { variant ->
         variant.outputs.forEach {
             if (it is com.android.build.api.variant.impl.VariantOutputImpl)
-                it.outputFileName = "Hail-v${it.versionName.get()}.apk"
+                it.outputFileName = "Hail-Enhanced-v${it.versionName.get()}.apk"
         }
     }
 }
@@ -109,4 +109,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hiddenapibypass)
     compileOnly(libs.libxposed.api)
+    testImplementation(libs.junit)
 }

@@ -14,6 +14,10 @@
             android:title="@string/tap_to_select"
             app:showAsAction="always"
             tools:ignore="AlwaysShowAction"/>
+    <item
+            android:id="@+id/action_manage_tags"
+            android:title="@string/action_manage_tags"
+            app:showAsAction="never"/>
     <group android:id="@+id/group_freeze_current">
         <item
                 android:id="@+id/action_freeze_current"

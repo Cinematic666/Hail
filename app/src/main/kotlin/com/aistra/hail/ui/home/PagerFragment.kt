@@ -116,12 +116,6 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         updateCurrentList()
         updateBarTitle()
         activity.appbar.setLiftOnScrollTargetView(binding.recyclerView)
-        tabs?.let { tabLayout ->
-            tabLayout.getTabAt(tabLayout.selectedTabPosition)?.view?.setOnLongClickListener {
-                if (isResumed) showTagDialog()
-                true
-            }
-        }
         activity.fab.setOnClickListener {
             setListFrozen(true, pagerAdapter.currentList.filterNot { it.whitelisted })
         }
@@ -450,6 +444,10 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         }
     }
 
+    private fun showTagEditor() {
+        (parentFragment as? HomeFragment)?.let { TagEditorDialog(it).show() }
+    }
+
     private fun showTagDialog(list: List<AppInfo>? = null) {
         val tabLayout = tabs ?: return  // The view has been destroyed; return directly.
         val homeAdapter = adapter ?: return
@@ -555,6 +553,7 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
 
     override fun onMenuItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.action_manage_tags -> showTagEditor()
             R.id.action_multiselect -> {
                 multiselect = !multiselect
                 item.updateIcon()
