@@ -83,6 +83,29 @@ class TagBackupArchiveTest {
     }
 
     @Test
+    fun importedFlagsAreRestoredForNewPackagesButExistingFlagsArePreserved() {
+        val backup = sample.copy(
+            apps = listOf(
+                TagBackupApp("com.example.reader", listOf(0, 101), pinned = false, whitelisted = false),
+                TagBackupApp("com.example.newapp", listOf(202), pinned = true, whitelisted = true)
+            )
+        )
+        val existing = listOf(
+            TagBackupAppState("com.example.reader", true, true, listOf(101))
+        )
+
+        val plan = TagBackupMerger.merge(backup, existing)
+        val reader = plan.apps.first { it.packageName == "com.example.reader" }
+        val newApp = plan.apps.first { it.packageName == "com.example.newapp" }
+
+        assertTrue(reader.pinned)
+        assertTrue(reader.whitelisted)
+        assertTrue(newApp.pinned)
+        assertTrue(newApp.whitelisted)
+        assertEquals(listOf(202), newApp.tagIds)
+    }
+
+    @Test
     fun defaultTagIsNormalizedToFirstPosition() {
         val unordered = sample.copy(tags = listOf(TagBackupTag("Media", 202), TagBackupTag("Work", 101), TagBackupTag("Default", 0)))
         assertEquals(0, TagBackupArchive.normalizeAndValidate(unordered).tags.first().id)

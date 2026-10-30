@@ -223,8 +223,8 @@ internal object TagBackupMerger {
             if (imported.packageName !in existingPackages) {
                 mergedApps += TagBackupAppState(
                     packageName = imported.packageName,
-                    pinned = false,
-                    whitelisted = false,
+                    pinned = imported.pinned,
+                    whitelisted = imported.whitelisted,
                     tagIds = imported.tagIds
                 )
             }

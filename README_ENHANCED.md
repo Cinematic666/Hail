@@ -1,4 +1,4 @@
-# Hail Enhanced — v1.11.0-enhanced.2 test build
+# Hail Enhanced — v1.11.0-enhanced.3 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 
@@ -39,4 +39,4 @@ To migrate from the original Hail installation without modifying it, use a root-
 
 Place both files in a ZIP archive (at the root or inside a `v1/` folder), then choose **Home → Tag backup → Import tag configuration** in Hail Enhanced.
 
-Only tag definitions and app-to-tag assignments are imported. Existing pin and whitelist flags are preserved; frozen states, permissions, working mode, and other preferences are not imported or changed. Apps already in Enhanced but absent from the archive are retained; assignments to tags that no longer exist are moved to Default.
+Only tag definitions and app-to-tag assignments are imported. For apps already tracked in Enhanced, existing pin and whitelist flags are preserved; newly imported app entries restore those flags from the backup. Frozen states, permissions, working mode, and other preferences are not imported or changed. Apps already in Enhanced but absent from the archive are retained; assignments to tags that no longer exist are moved to Default.

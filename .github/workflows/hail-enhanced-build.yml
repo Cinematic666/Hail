@@ -1,4 +1,4 @@
-name: Hail Enhanced v1.11.0-enhanced.2 test build
+name: Hail Enhanced v1.11.0-enhanced.3 test build
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
-          name: Hail-Enhanced-v1.11.0-enhanced.2-test
+          name: Hail-Enhanced-v1.11.0-enhanced.3-test
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14
