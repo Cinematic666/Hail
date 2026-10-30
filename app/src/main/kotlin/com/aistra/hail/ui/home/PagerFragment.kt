@@ -553,7 +553,10 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
 
     override fun onMenuItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_manage_tags -> showTagEditor()
+            R.id.action_manage_tags -> {
+                showTagEditor()
+                return true
+            }
             R.id.action_multiselect -> {
                 multiselect = !multiselect
                 item.updateIcon()

@@ -270,10 +270,12 @@ class TagEditorDialog(private val home: HomeFragment) {
             }
 
             holder.handle.setOnTouchListener { _, event ->
-                if (!fixed && event.actionMasked == MotionEvent.ACTION_DOWN) {
-                    itemTouchHelper.startDrag(holder)
+                if (fixed) {
+                    false
+                } else {
+                    if (event.actionMasked == MotionEvent.ACTION_DOWN) itemTouchHelper.startDrag(holder)
                     true
-                } else false
+                }
             }
             holder.up.setOnClickListener {
                 val index = holder.bindingAdapterPosition
