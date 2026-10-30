@@ -1,4 +1,4 @@
-# Hail Enhanced — v1.11.0 test build
+# Hail Enhanced — v1.11.0-enhanced.2 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 

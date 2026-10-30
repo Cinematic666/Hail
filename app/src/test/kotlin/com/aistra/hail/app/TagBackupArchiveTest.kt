@@ -84,7 +84,7 @@ class TagBackupArchiveTest {
 
     @Test
     fun defaultTagIsNormalizedToFirstPosition() {
-        val unordered = sample.copy(tags = listOf(TagBackupTag("Work", 101), TagBackupTag("Default", 0)))
+        val unordered = sample.copy(tags = listOf(TagBackupTag("Media", 202), TagBackupTag("Work", 101), TagBackupTag("Default", 0)))
         assertEquals(0, TagBackupArchive.normalizeAndValidate(unordered).tags.first().id)
     }
 

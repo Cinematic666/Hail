@@ -243,23 +243,38 @@ object HailData {
             TagBackupAppState(it.packageName, it.pinned, it.whitelisted, it.tagIdList.toList())
         }
         val plan = TagBackupMerger.merge(backup, existing)
+        val previousTags = tags.toList()
+        val previousApps = checkedList.toList()
 
-        tags.clear()
-        tags.addAll(plan.tags.map { it.name to it.id })
-        checkedList.clear()
-        plan.apps.forEach {
-            checkedList.add(
-                AppInfo(
-                    packageName = it.packageName,
-                    pinned = it.pinned,
-                    whitelisted = it.whitelisted,
-                    tagIdList = it.tagIds.toMutableList()
+        try {
+            tags.clear()
+            tags.addAll(plan.tags.map { it.name to it.id })
+            checkedList.clear()
+            plan.apps.forEach {
+                checkedList.add(
+                    AppInfo(
+                        packageName = it.packageName,
+                        pinned = it.pinned,
+                        whitelisted = it.whitelisted,
+                        tagIdList = it.tagIds.toMutableList()
+                    )
                 )
-            )
-        }
+            }
 
-        saveTags()
-        saveApps()
+            saveTags()
+            saveApps()
+        } catch (error: Exception) {
+            // Restore the in-memory state and make a best-effort rollback of both files.
+            tags.clear()
+            tags.addAll(previousTags)
+            checkedList.clear()
+            checkedList.addAll(previousApps)
+            runCatching {
+                saveTags()
+                saveApps()
+            }
+            throw error
+        }
     }
 
     fun changeAppsSort(sort: String) = sp.edit { putString(SORT_BY, sort) }
