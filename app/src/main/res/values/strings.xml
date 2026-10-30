@@ -174,4 +174,15 @@
         <item quantity="other">%d apps</item>
     </plurals>
 
+
+    <string name="tag_backup_menu">Tag backup</string>
+    <string name="tag_backup_export">Export tag configuration</string>
+    <string name="tag_backup_import">Import tag configuration</string>
+    <string name="tag_backup_export_success">Tag backup saved successfully</string>
+    <string name="tag_backup_import_title">Import tag configuration?</string>
+    <string name="tag_backup_import_summary">The backup contains %1$d tags and %2$d app assignments. The tag list and assignments for matching apps will be replaced. Other app entries will be kept and moved to Default if their old tags no longer exist. Existing pin and whitelist flags are preserved. Freeze states and working mode are not changed.</string>
+    <string name="tag_backup_import_confirm">Import</string>
+    <string name="tag_backup_import_success">Imported %1$d tags and %2$d app assignments</string>
+    <string name="tag_backup_error">Backup operation failed: %1$s</string>
+
 </resources>

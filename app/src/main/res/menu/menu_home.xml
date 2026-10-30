@@ -18,6 +18,20 @@
             android:id="@+id/action_manage_tags"
             android:title="@string/action_manage_tags"
             app:showAsAction="never"/>
+    <item
+            android:title="@string/tag_backup_menu"
+            app:showAsAction="never">
+        <menu>
+            <item
+                    android:id="@+id/action_export_tag_backup"
+                    android:title="@string/tag_backup_export"
+                    app:showAsAction="never"/>
+            <item
+                    android:id="@+id/action_import_tag_backup"
+                    android:title="@string/tag_backup_import"
+                    app:showAsAction="never"/>
+        </menu>
+    </item>
     <group android:id="@+id/group_freeze_current">
         <item
                 android:id="@+id/action_freeze_current"

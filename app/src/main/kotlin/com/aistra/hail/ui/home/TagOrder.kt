@@ -8,4 +8,7 @@ internal object TagOrder {
         tags.add(to, item)
         return true
     }
+
+    // Map every signed 32-bit tag ID to a non-negative, collision-free RecyclerView item ID.
+    fun stableItemId(tagId: Int): Long = tagId.toLong() and 0xFFFF_FFFFL
 }

@@ -110,4 +110,5 @@ dependencies {
     implementation(libs.hiddenapibypass)
     compileOnly(libs.libxposed.api)
     testImplementation(libs.junit)
+    testImplementation(libs.json)
 }

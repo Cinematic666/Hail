@@ -194,7 +194,7 @@ object HailData {
 
     fun saveApps() {
         if (!HFiles.exists(dir)) HFiles.createDirectories(dir)
-        HFiles.write(appsPath, JSONArray().run {
+        check(HFiles.write(appsPath, JSONArray().run {
             checkedList.forEach {
                 put(
                     JSONObject()
@@ -205,7 +205,7 @@ object HailData {
                 )
             }
             toString()
-        })
+        })) { "Could not save apps.json" }
     }
 
     val tags: MutableList<Pair<String, Int>> by lazy {
@@ -223,12 +223,43 @@ object HailData {
 
     fun saveTags() {
         if (!HFiles.exists(dir)) HFiles.createDirectories(dir)
-        HFiles.write(tagsPath, JSONArray().run {
+        check(HFiles.write(tagsPath, JSONArray().run {
             tags.forEach {
                 put(JSONObject().put(KEY_TAG, it.first).put(KEY_ID, it.second))
             }
             toString()
-        })
+        })) { "Could not save tags.json" }
+    }
+
+    fun createTagBackup(): TagBackup = TagBackup(
+        tags = tags.map { TagBackupTag(it.first, it.second) },
+        apps = checkedList.map {
+            TagBackupApp(it.packageName, it.tagIdList.toList(), it.pinned, it.whitelisted)
+        }
+    )
+
+    fun importTagBackup(backup: TagBackup) {
+        val existing = checkedList.map {
+            TagBackupAppState(it.packageName, it.pinned, it.whitelisted, it.tagIdList.toList())
+        }
+        val plan = TagBackupMerger.merge(backup, existing)
+
+        tags.clear()
+        tags.addAll(plan.tags.map { it.name to it.id })
+        checkedList.clear()
+        plan.apps.forEach {
+            checkedList.add(
+                AppInfo(
+                    packageName = it.packageName,
+                    pinned = it.pinned,
+                    whitelisted = it.whitelisted,
+                    tagIdList = it.tagIds.toMutableList()
+                )
+            )
+        }
+
+        saveTags()
+        saveApps()
     }
 
     fun changeAppsSort(sort: String) = sp.edit { putString(SORT_BY, sort) }

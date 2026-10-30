@@ -448,6 +448,10 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         (parentFragment as? HomeFragment)?.let { TagEditorDialog(it).show() }
     }
 
+    fun refreshAfterTagConfigChanged() {
+        if (_binding != null) updateCurrentList()
+    }
+
     private fun showTagDialog(list: List<AppInfo>? = null) {
         val tabLayout = tabs ?: return  // The view has been destroyed; return directly.
         val homeAdapter = adapter ?: return
@@ -555,6 +559,14 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         when (item.itemId) {
             R.id.action_manage_tags -> {
                 showTagEditor()
+                return true
+            }
+            R.id.action_export_tag_backup -> {
+                (parentFragment as? HomeFragment)?.launchTagBackupExport()
+                return true
+            }
+            R.id.action_import_tag_backup -> {
+                (parentFragment as? HomeFragment)?.launchTagBackupImport()
                 return true
             }
             R.id.action_multiselect -> {
