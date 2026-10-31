@@ -154,6 +154,7 @@ object HailData {
         APP_LIST_THREE_COLUMNS, APP_LIST_FOUR_COLUMNS
     )
     const val RULE_ENGINE_ENABLED = "rule_engine_enabled"
+    const val ACTIVE_PROFILE_ID = "active_profile_id"
 
     private val sp = PreferenceManager.getDefaultSharedPreferences(app)
     val sortBy get() = sp.getString(SORT_BY, SORT_NAME)

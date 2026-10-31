@@ -1,6 +1,7 @@
 package com.aistra.hail.app
 
 import android.content.Context
+import androidx.preference.PreferenceManager
 import com.aistra.hail.HailApp.Companion.app
 import com.aistra.hail.enhanced.domain.FreezeOperationReport
 import com.aistra.hail.enhanced.domain.FreezeOperationResult
@@ -17,7 +18,7 @@ internal data class FreezeProfileApplyResult(
 }
 
 internal object FreezeProfileManager {
-    private const val ACTIVE_PROFILE = "active_profile_id"
+    private const val ACTIVE_PROFILE = HailData.ACTIVE_PROFILE_ID
 
     fun createFromTracked(context: Context, name: String): FreezeProfile {
         val packages = HailData.checkedList
@@ -40,7 +41,7 @@ internal object FreezeProfileManager {
         val profiles = store.getAll()
         val target = profiles.firstOrNull { it.id == profileId }
             ?: throw IllegalArgumentException("Freeze profile was not found")
-        val preferences = context.getSharedPreferences("hail_enhanced_profiles", Context.MODE_PRIVATE)
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
         val active = profiles.firstOrNull { it.id == preferences.getString(ACTIVE_PROFILE, null) }
         val packages = (target.packageStates.keys + (active?.packageStates?.keys ?: emptySet())).toSet()
         val currentStates = packages.associateWith { packageName ->

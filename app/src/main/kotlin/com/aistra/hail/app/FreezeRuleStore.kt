@@ -1,6 +1,7 @@
 package com.aistra.hail.app
 
 import android.content.Context
+import androidx.preference.PreferenceManager
 import com.aistra.hail.enhanced.domain.FreezeRule
 import com.aistra.hail.enhanced.domain.RuleAction
 import com.aistra.hail.enhanced.domain.RuleEngine
@@ -8,21 +9,24 @@ import com.aistra.hail.enhanced.domain.RuleExecutionState
 import com.aistra.hail.enhanced.domain.RuleTrigger
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 internal class FreezeRuleStore(context: Context) {
-    private val preferences = context.applicationContext.getSharedPreferences(
-        "hail_enhanced_rules", Context.MODE_PRIVATE
-    )
+    private val applicationContext = context.applicationContext
+    private val file = File(File(applicationContext.filesDir, "enhanced"), "rules.json")
+    private val defaultPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
     var isEnabled: Boolean
-        get() = preferences.getBoolean(KEY_ENABLED, false)
+        get() = defaultPreferences.getBoolean(HailData.RULE_ENGINE_ENABLED, false)
         set(value) {
-            check(preferences.edit().putBoolean(KEY_ENABLED, value).commit())
+            check(defaultPreferences.edit().putBoolean(HailData.RULE_ENGINE_ENABLED, value).commit())
         }
 
     @Synchronized
     fun getRules(): List<FreezeRule> = runCatching {
-        val json = JSONArray(preferences.getString(KEY_RULES, "[]"))
+        val json = readDocument().optJSONArray("rules") ?: JSONArray()
         val rules = List(json.length()) { index ->
             val item = json.getJSONObject(index)
             val packages = item.getJSONArray("packages")
@@ -57,14 +61,13 @@ internal class FreezeRuleStore(context: Context) {
                     .put("packages", JSONArray(rule.packageNames.sorted()))
             )
         }
-        check(preferences.edit().putString(KEY_RULES, json.toString()).commit()) {
-            "Could not save automation rules"
-        }
+        val document = readDocument().put("rules", json)
+        writeDocument(document)
     }
 
     @Synchronized
     fun getExecutionState(): RuleExecutionState = runCatching {
-        val json = JSONObject(preferences.getString(KEY_STATE, "{}"))
+        val json = readDocument().optJSONObject("executionState") ?: JSONObject()
         val timesJson = json.optJSONObject("lastRunAtByRule") ?: JSONObject()
         val times = linkedMapOf<String, Long>()
         timesJson.keys().forEach { times[it] = timesJson.getLong(it) }
@@ -81,29 +84,44 @@ internal class FreezeRuleStore(context: Context) {
         state.lastRunAtByRule.forEach { (id, time) -> times.put(id, time) }
         val processed = JSONArray()
         state.processedEventKeys.forEach(processed::put)
-        val json = JSONObject()
-            .put("lastRunAtByRule", times)
-            .put("processedEventKeys", processed)
-        check(preferences.edit().putString(KEY_STATE, json.toString()).commit())
+        val document = readDocument().put(
+            "executionState",
+            JSONObject().put("lastRunAtByRule", times).put("processedEventKeys", processed)
+        )
+        writeDocument(document)
     }
 
     @Synchronized
     fun appendAudit(message: String) {
-        val entries = runCatching {
-            val old = JSONArray(preferences.getString(KEY_AUDIT, "[]"))
-            List(old.length()) { old.getString(it) }
-        }.getOrDefault(emptyList())
+        val entries = readDocument().optJSONArray("audit") ?: JSONArray()
         val next = JSONArray()
-        (entries + (System.currentTimeMillis().toString() + ": " + message))
+        val old = List(entries.length()) { entries.getString(it) }
+        (old + (System.currentTimeMillis().toString() + ": " + message))
             .takeLast(MAX_AUDIT_ENTRIES).forEach(next::put)
-        check(preferences.edit().putString(KEY_AUDIT, next.toString()).commit())
+        writeDocument(readDocument().put("audit", next))
+    }
+
+    private fun readDocument(): JSONObject = runCatching {
+        if (file.isFile) JSONObject(file.readText()) else JSONObject()
+    }.getOrDefault(JSONObject())
+
+    private fun writeDocument(document: JSONObject) {
+        val parent = file.parentFile ?: throw IOException("Rule storage has no parent")
+        if (!parent.exists() && !parent.mkdirs()) throw IOException("Could not create rule storage")
+        val temporary = File.createTempFile(".rules.", ".tmp", parent)
+        try {
+            FileOutputStream(temporary).use {
+                it.write(document.toString().toByteArray(Charsets.UTF_8))
+                it.fd.sync()
+            }
+            if (file.exists() && !file.delete()) throw IOException("Could not replace rule storage")
+            if (!temporary.renameTo(file)) throw IOException("Could not save rule storage")
+        } finally {
+            if (temporary.exists()) temporary.delete()
+        }
     }
 
     private companion object {
-        const val KEY_ENABLED = "enabled"
-        const val KEY_RULES = "rules"
-        const val KEY_STATE = "execution_state"
-        const val KEY_AUDIT = "audit"
         const val MAX_AUDIT_ENTRIES = 100
     }
 }
