@@ -179,12 +179,12 @@ class HomeFragment : MainFragment() {
                             refreshTags(0)
                             app.setAutoFreezeServiceEnabled(false)
                             HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)
-                            app.setAppTheme(HailData.appTheme)
                             Toast.makeText(
-                                requireContext(),
+                                app,
                                 R.string.full_backup_import_success,
                                 Toast.LENGTH_LONG
                             ).show()
+                            app.setAppTheme(HailData.appTheme)
                         } catch (error: Exception) {
                             Toast.makeText(
                                 requireContext(),
