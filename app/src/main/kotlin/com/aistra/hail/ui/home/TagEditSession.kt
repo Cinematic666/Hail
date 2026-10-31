@@ -27,6 +27,13 @@ internal class TagEditSession(
     fun tagsFor(packageName: String): List<Int> = appTags[packageName].orEmpty()
     fun allAssignments(): Map<String, List<Int>> = appTags.mapValues { it.value.toList() }
 
+    /** Packages explicitly orphaned by this edit, excluding preexisting untagged records. */
+    fun newlyUnassignedPackages(): Set<String> = baselineApps
+        .asSequence()
+        .filter { it.tagIds.isNotEmpty() && tagsFor(it.packageName).isEmpty() }
+        .map { it.packageName }
+        .toSet()
+
     fun addTag(rawName: String): Int? {
         val name = rawName.trim()
         if (name.isEmpty() || tags.any { it.first.equals(name, ignoreCase = true) }) return null
