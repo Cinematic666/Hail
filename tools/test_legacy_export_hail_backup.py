@@ -60,13 +60,19 @@ class LegacyBackupExporterTest(unittest.TestCase):
                 self.assertIn("files/v1/tags.json", archive.namelist())
                 self.assertIn("files/v1/apps.json", archive.namelist())
 
-    def test_archive_creation_rejects_missing_hail_state(self):
+    def test_archive_creation_adds_default_state_for_fresh_legacy_install(self):
         with tempfile.TemporaryDirectory() as directory:
-            with self.assertRaises(ValueError):
-                legacy_backup.create_archive(
-                    {"notes/state.json": b"{}"}, [], "com.aistra.hail.enhanced",
-                    Path(directory) / "bad.zip"
+            output = Path(directory) / "fresh.zip"
+            count, _ = legacy_backup.create_archive(
+                {"notes/state.json": b"{}"}, [], "com.aistra.hail.enhanced", output
+            )
+            self.assertEqual(3, count)
+            with zipfile.ZipFile(output) as archive:
+                self.assertEqual(
+                    b'[{"tag":"Default","id":0}]',
+                    archive.read("files/v1/tags.json")
                 )
+                self.assertEqual(b"[]", archive.read("files/v1/apps.json"))
 
     def test_tar_reader_rejects_path_traversal(self):
         import io
