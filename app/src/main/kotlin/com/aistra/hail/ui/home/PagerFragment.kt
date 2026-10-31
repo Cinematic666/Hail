@@ -553,6 +553,14 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
 
     override fun onMenuItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.action_export_full_backup -> {
+                (parentFragment as? HomeFragment)?.launchFullBackupExport()
+                return true
+            }
+            R.id.action_import_full_backup -> {
+                (parentFragment as? HomeFragment)?.launchFullBackupImport()
+                return true
+            }
             R.id.action_export_tag_backup -> {
                 (parentFragment as? HomeFragment)?.launchTagBackupExport()
                 return true
