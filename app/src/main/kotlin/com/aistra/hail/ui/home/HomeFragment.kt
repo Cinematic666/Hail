@@ -48,13 +48,11 @@ class HomeFragment : MainFragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        if (tags.size == 1) binding.tabs.isVisible = false
         binding.pager.adapter = HomeAdapter(this)
         TabLayoutMediator(binding.tabs, binding.pager) { tab, position ->
             tab.text = tags[position].first
         }.attach()
         binding.tabs.post { bindTagLongPress() }
-        binding.manageTagsButton.setOnClickListener { TagEditorDialog(this).show() }
         binding.tabs.applyDefaultInsetter { paddingRelative(isRtl, start = !activity.isLandscape, end = true) }
         return binding.root
     }
@@ -64,7 +62,8 @@ class HomeFragment : MainFragment() {
     fun refreshTags(preferredTagId: Int?) {
         val pagerAdapter = binding.pager.adapter as? HomeAdapter ?: return
         pagerAdapter.notifyDataSetChanged()
-        binding.tabs.isVisible = tags.size > 1
+        // Keep even the Default tab visible: long-press is the single tag-editor entry point.
+        binding.tabs.isVisible = true
         binding.tabs.post {
             bindTagLongPress()
             val position = tags.indexOfFirst { it.second == preferredTagId }
