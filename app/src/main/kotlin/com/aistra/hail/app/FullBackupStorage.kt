@@ -24,7 +24,7 @@ internal object FullBackupStorage {
                 val canonical = file.canonicalFile
                 require(canonical.path.startsWith(rootPrefix)) { "App data contains an unsafe file path" }
                 FullBackupFile(
-                    path = canonical.relativeTo(root).invariantSeparatorsPath,
+                    path = canonical.relativeTo(root).path.replace(File.separatorChar, '/'),
                     bytes = canonical.readBytes()
                 )
             }
