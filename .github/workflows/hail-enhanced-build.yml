@@ -12,6 +12,11 @@ on:
 permissions:
   contents: read
 
+# Build only the latest commit of each Enhanced development branch.
+concurrency:
+  group: hail-enhanced-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
