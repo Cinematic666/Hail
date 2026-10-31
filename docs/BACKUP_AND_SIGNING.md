@@ -65,7 +65,7 @@ Do not delete the migration ZIP until the new installation has been checked.
 
 ## Full Backup & Restore
 
-The in-app full backup contains:
+The in-app full backup is a regular ZIP archive and is **not encrypted**. It contains:
 
 - Hail's private \`files/\` data, including tags and tracked-app data.
 - Tracked app assignments, pin and whitelist flags.
@@ -81,7 +81,7 @@ The following are **not** restored:
 - Auto-freeze activation (the service is left disabled until permissions are checked).
 - Android permission grants, launcher-pinned shortcuts and system-level freeze states.
 
-The restore does not freeze or unfreeze packages. After restore, configure the working mode and permissions manually. The system's current frozen states are left untouched.
+The restore does not freeze or unfreeze packages. After restore, configure the working mode and permissions manually. The system's current frozen states are left untouched. Keep backup ZIPs in a private location because they include the tracked package list and saved app preferences.
 
 The existing tag-only ZIP export/import remains available for compatibility with original Hail archives.
 
