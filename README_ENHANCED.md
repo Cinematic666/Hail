@@ -1,8 +1,12 @@
-# Hail Enhanced — v1.11.0-enhanced.3 test build
+# Hail Enhanced — v1.11.0-enhanced.4 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 
 ## What changed
+
+- Groups home-screen actions into one Management dropdown with Tags, Backup and Restore, Freeze Control, and App List sections.
+- Adds per-category bulk app management: select apps from a source category, then add them to the current category or move them out of the source category.
+- Supports app search and select-all for the currently filtered source-category list.
 
 - Adds a tag manager to the home-screen overflow menu.
 - Long-pressing a tab also opens the tag manager.

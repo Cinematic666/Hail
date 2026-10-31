@@ -92,6 +92,13 @@ class TagEditorDialog(private val home: HomeFragment) {
             .show()
     }
 
+    private fun manageApps(tag: Pair<String, Int>) {
+        TagAppManagerDialog(context, tag) {
+            tagAdapter.notifyDataSetChanged()
+            home.refreshAppLists()
+        }.show()
+    }
+
     private fun moveItem(from: Int, to: Int): Boolean {
         if (!TagOrder.move(workingTags, from, to)) return false
         tagAdapter.notifyItemMoved(from, to)
@@ -236,6 +243,7 @@ class TagEditorDialog(private val home: HomeFragment) {
             }
             labels.addView(title)
             labels.addView(subtitle)
+            val apps = actionView("▦", R.string.tag_manage_apps)
             val up = actionView("↑", R.string.tag_move_up)
             val down = actionView("↓", R.string.tag_move_down)
             val edit = actionView("✎", R.string.tag_edit)
@@ -243,11 +251,12 @@ class TagEditorDialog(private val home: HomeFragment) {
 
             row.addView(handle, LinearLayout.LayoutParams(context.dp(36), context.dp(48)))
             row.addView(labels, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(apps, LinearLayout.LayoutParams(context.dp(36), context.dp(48)))
             row.addView(up, LinearLayout.LayoutParams(context.dp(36), context.dp(48)))
             row.addView(down, LinearLayout.LayoutParams(context.dp(36), context.dp(48)))
             row.addView(edit, LinearLayout.LayoutParams(context.dp(36), context.dp(48)))
             row.addView(delete, LinearLayout.LayoutParams(context.dp(36), context.dp(48)))
-            return TagViewHolder(row, handle, title, subtitle, up, down, edit, delete)
+            return TagViewHolder(row, handle, title, subtitle, apps, up, down, edit, delete)
         }
 
         override fun onBindViewHolder(holder: TagViewHolder, position: Int) {
@@ -261,6 +270,7 @@ class TagEditorDialog(private val home: HomeFragment) {
                 if (fixed) R.string.tag_default_locked else R.string.tag_drag
             )
             holder.handle.isEnabled = !fixed
+            holder.apps.isEnabled = true
             holder.up.isEnabled = !fixed && position > 1
             holder.down.isEnabled = !fixed && position < itemCount - 1
             holder.edit.isEnabled = !fixed
@@ -268,6 +278,8 @@ class TagEditorDialog(private val home: HomeFragment) {
             listOf(holder.handle, holder.up, holder.down, holder.edit, holder.delete).forEach {
                 it.alpha = if (it.isEnabled) 1f else 0.35f
             }
+            holder.apps.alpha = 1f
+            holder.apps.setOnClickListener { manageApps(tag) }
 
             holder.handle.setOnTouchListener { _, event ->
                 if (fixed) {
@@ -318,6 +330,7 @@ class TagEditorDialog(private val home: HomeFragment) {
         val handle: TextView,
         val title: TextView,
         val subtitle: TextView,
+        val apps: TextView,
         val up: TextView,
         val down: TextView,
         val edit: TextView,

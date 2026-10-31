@@ -15,77 +15,29 @@
             app:showAsAction="always"
             tools:ignore="AlwaysShowAction"/>
     <item
-            android:id="@+id/action_manage_tags"
-            android:title="@string/action_manage_tags"
-            app:showAsAction="never"/>
-    <item
-            android:title="@string/tag_backup_menu"
+            android:id="@+id/action_tools"
+            android:title="@string/action_tools"
             app:showAsAction="never">
         <menu>
-            <item
-                    android:id="@+id/action_export_tag_backup"
-                    android:title="@string/tag_backup_export"
-                    app:showAsAction="never"/>
-            <item
-                    android:id="@+id/action_import_tag_backup"
-                    android:title="@string/tag_backup_import"
-                    app:showAsAction="never"/>
-        </menu>
-    </item>
-    <group android:id="@+id/group_freeze_current">
-        <item
-                android:id="@+id/action_freeze_current"
-                android:title="@string/action_freeze_current"
-                app:showAsAction="never"/>
-        <item
-                android:id="@+id/action_unfreeze_current"
-                android:title="@string/action_unfreeze_current"
-                app:showAsAction="never"/>
-    </group>
-    <group android:id="@+id/group_freeze_all">
-        <item
-                android:id="@+id/action_freeze_all"
-                android:title="@string/action_freeze_all"
-                app:showAsAction="never"/>
-        <item
-                android:id="@+id/action_unfreeze_all"
-                android:title="@string/action_unfreeze_all"
-                app:showAsAction="never"/>
-        <item
-                android:id="@+id/action_freeze_non_whitelisted"
-                android:title="@string/action_freeze_non_whitelisted"
-                app:showAsAction="never"/>
-    </group>
-    <item
-            android:title="@string/action_import_app"
-            app:showAsAction="never">
-        <menu>
-            <group>
-                <item
-                        android:id="@+id/action_import_clipboard"
-                        android:title="@string/action_import_clipboard"
-                        app:showAsAction="never"/>
-                <item
-                        android:id="@+id/action_import_frozen"
-                        android:title="@string/action_import_frozen"
-                        app:showAsAction="never"/>
-            </group>
-        </menu>
-    </item>
-    <item
-            android:title="@string/action_export_clipboard"
-            app:showAsAction="never">
-        <menu>
-            <group>
-                <item
-                        android:id="@+id/action_export_current"
-                        android:title="@string/action_export_current"
-                        app:showAsAction="never"/>
-                <item
-                        android:id="@+id/action_export_all"
-                        android:title="@string/action_export_all"
-                        app:showAsAction="never"/>
-            </group>
+            <item android:title="@string/menu_category_tags" android:enabled="false"/>
+            <item android:id="@+id/action_manage_tags" android:title="@string/action_manage_tags" app:showAsAction="never"/>
+
+            <item android:title="@string/menu_category_backup" android:enabled="false"/>
+            <item android:id="@+id/action_export_tag_backup" android:title="@string/tag_backup_export" app:showAsAction="never"/>
+            <item android:id="@+id/action_import_tag_backup" android:title="@string/tag_backup_import" app:showAsAction="never"/>
+
+            <item android:title="@string/menu_category_freeze" android:enabled="false"/>
+            <item android:id="@+id/action_freeze_current" android:title="@string/action_freeze_current" app:showAsAction="never"/>
+            <item android:id="@+id/action_unfreeze_current" android:title="@string/action_unfreeze_current" app:showAsAction="never"/>
+            <item android:id="@+id/action_freeze_all" android:title="@string/action_freeze_all" app:showAsAction="never"/>
+            <item android:id="@+id/action_unfreeze_all" android:title="@string/action_unfreeze_all" app:showAsAction="never"/>
+            <item android:id="@+id/action_freeze_non_whitelisted" android:title="@string/action_freeze_non_whitelisted" app:showAsAction="never"/>
+
+            <item android:title="@string/menu_category_apps" android:enabled="false"/>
+            <item android:id="@+id/action_import_clipboard" android:title="@string/action_import_clipboard" app:showAsAction="never"/>
+            <item android:id="@+id/action_import_frozen" android:title="@string/action_import_frozen" app:showAsAction="never"/>
+            <item android:id="@+id/action_export_current" android:title="@string/action_export_current" app:showAsAction="never"/>
+            <item android:id="@+id/action_export_all" android:title="@string/action_export_all" app:showAsAction="never"/>
         </menu>
     </item>
 </menu>

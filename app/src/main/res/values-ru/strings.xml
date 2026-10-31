@@ -191,4 +191,24 @@
     <string name="tag_backup_import_success">Импортировано тегов: %1$d, привязок приложений: %2$d</string>
     <string name="tag_backup_error">Ошибка операции с резервной копией: %1$s</string>
 
+
+    <string name="action_tools">Управление</string>
+    <string name="menu_category_tags">ТЕГИ И КАТЕГОРИИ</string>
+    <string name="menu_category_backup">РЕЗЕРВНОЕ КОПИРОВАНИЕ</string>
+    <string name="menu_category_freeze">УПРАВЛЕНИЕ ЗАМОРОЗКОЙ</string>
+    <string name="menu_category_apps">СПИСОК ПРИЛОЖЕНИЙ</string>
+    <string name="tag_manage_apps">Управление приложениями категории</string>
+    <string name="tag_apps_target">Целевая категория: %1$s</string>
+    <string name="tag_source_category">Категория-источник</string>
+    <string name="tag_apps_search">Поиск приложений</string>
+    <string name="tag_select_all_visible">Выбрать все показанные</string>
+    <string name="tag_clear_visible_selection">Снять выделение с показанных</string>
+    <string name="tag_selected_count">Выбрано: %1$d</string>
+    <string name="tag_apps_empty">В этой категории нет приложений</string>
+    <string name="tag_apps_no_source_categories">Сначала создайте ещё одну категорию, чтобы добавлять или переносить приложения.</string>
+    <string name="tag_apps_add">Добавить</string>
+    <string name="tag_apps_move">Перенести</string>
+    <string name="tag_apps_add_success">Добавлено в категорию: %1$d</string>
+    <string name="tag_apps_move_success">Перенесено в категорию: %1$d</string>
+
 </resources>

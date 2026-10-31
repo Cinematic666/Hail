@@ -75,6 +75,12 @@ class HomeFragment : MainFragment() {
         }
     }
 
+    fun refreshAppLists() {
+        childFragmentManager.fragments
+            .filterIsInstance<PagerFragment>()
+            .forEach { it.refreshAfterTagConfigChanged() }
+    }
+
     fun launchTagBackupExport() {
         exportTagBackupLauncher.launch("Hail-Tag-Backup.zip")
     }

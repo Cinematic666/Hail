@@ -185,4 +185,24 @@
     <string name="tag_backup_import_success">Imported %1$d tags and %2$d app assignments</string>
     <string name="tag_backup_error">Backup operation failed: %1$s</string>
 
+
+    <string name="action_tools">Management</string>
+    <string name="menu_category_tags">TAGS AND CATEGORIES</string>
+    <string name="menu_category_backup">BACKUP AND RESTORE</string>
+    <string name="menu_category_freeze">FREEZE CONTROL</string>
+    <string name="menu_category_apps">APP LIST</string>
+    <string name="tag_manage_apps">Manage category apps</string>
+    <string name="tag_apps_target">Target category: %1$s</string>
+    <string name="tag_source_category">Source category</string>
+    <string name="tag_apps_search">Search apps</string>
+    <string name="tag_select_all_visible">Select all shown</string>
+    <string name="tag_clear_visible_selection">Clear shown selection</string>
+    <string name="tag_selected_count">Selected: %1$d</string>
+    <string name="tag_apps_empty">No apps in this category</string>
+    <string name="tag_apps_no_source_categories">Create another category first to move or add apps.</string>
+    <string name="tag_apps_add">Add</string>
+    <string name="tag_apps_move">Move</string>
+    <string name="tag_apps_add_success">Added to category: %1$d</string>
+    <string name="tag_apps_move_success">Moved to category: %1$d</string>
+
 </resources>
