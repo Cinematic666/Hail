@@ -22,15 +22,6 @@
             app:tabPaddingEnd="10dp"
             app:tabMode="scrollable" />
 
-        <ImageButton
-            android:id="@+id/manage_tags_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:padding="12dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_outline_settings"
-            android:tint="?attr/colorControlNormal"
-            android:contentDescription="@string/action_manage_tags" />
     </LinearLayout>
 
     <androidx.viewpager2.widget.ViewPager2
