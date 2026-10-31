@@ -55,6 +55,28 @@ class TagEditSessionTest {
         assertFalse(s.deleteTag(0))
     }
 
+    @Test fun onlyNewlyOrphanedAppsAreRemoved() {
+        val s = session()
+        assertTrue(s.newlyUnassignedPackages().isEmpty())
+        assertTrue(s.deleteTag(11))
+        assertEquals(setOf("a.games"), s.newlyUnassignedPackages())
+        assertEquals(listOf(22), s.tagsFor("c.both"))
+    }
+
+    @Test fun preexistingUntaggedEntriesAreNotTreatedAsNewlyOrphaned() {
+        val s = TagEditSession(
+            listOf("Default" to 0, "Work" to 22),
+            listOf(
+                TagAssignment("legacy.untagged", emptyList()),
+                TagAssignment("live.work", listOf(22))
+            )
+        )
+        assertTrue(s.renameTag(22, "Office"))
+        assertTrue(s.newlyUnassignedPackages().isEmpty())
+        assertTrue(s.deleteTag(22))
+        assertEquals(setOf("live.work"), s.newlyUnassignedPackages())
+    }
+
     @Test fun duplicateAndBlankNamesAreRejected() {
         val s = session()
         assertNull(s.addTag(" "))
