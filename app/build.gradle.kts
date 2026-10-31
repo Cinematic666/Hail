@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -5,8 +7,8 @@ plugins {
 
 android {
     val signingProps = file("../signing.properties")
-    val signingProperties = java.util.Properties().apply {
-        if (signingProps.exists()) load(signingProps.inputStream())
+    val signingProperties = Properties().apply {
+        if (signingProps.exists()) signingProps.inputStream().use { load(it) }
     }
     val releaseStoreFile = System.getenv("HAIL_SIGNING_KEYSTORE_PATH")
         ?: signingProperties.getProperty("storeFile")
