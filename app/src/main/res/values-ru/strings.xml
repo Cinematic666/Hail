@@ -257,6 +257,8 @@
     <string name="rule_deleted">Правило удалено</string>
 
     <string name="enhanced_navigation">Навигация и списки</string>
+    <string name="filter_disabled_apps">Показывать отключённые приложения</string>
+    <string name="filter_hidden_apps">Показывать скрытые приложения</string>
     <string name="full_backup_select_categories">Теги и отслеживаемые приложения включаются всегда. Выберите, добавлять ли остальные файлы приложения и поддерживаемые настройки.</string>
     <string name="full_backup_additional_files">Дополнительные файлы приложения</string>
     <string name="full_backup_preferences">Поддерживаемые настройки</string>

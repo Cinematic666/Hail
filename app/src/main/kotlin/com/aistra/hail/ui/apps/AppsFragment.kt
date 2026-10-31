@@ -281,6 +281,8 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
         menu.findItem(
             if (HailData.filterSystemApps) R.id.filter_system_apps else R.id.filter_user_apps
         ).isChecked = true
+        menu.findItem(R.id.filter_disabled_apps).isChecked = HailData.filterDisabledApps
+        menu.findItem(R.id.filter_hidden_apps).isChecked = HailData.filterHiddenApps
         menu.findItem(R.id.filter_frozen_apps).isChecked = HailData.filterFrozenApps
         menu.findItem(R.id.filter_unfrozen_apps).isChecked = HailData.filterUnfrozenApps
     }
@@ -296,6 +298,8 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
                     changeAppsFilter(HailData.FILTER_SYSTEM_APPS, item)
                 }.setNegativeButton(android.R.string.cancel, null).show()
 
+            R.id.filter_disabled_apps -> changeAppsFilter(HailData.FILTER_DISABLED_APPS, item)
+            R.id.filter_hidden_apps -> changeAppsFilter(HailData.FILTER_HIDDEN_APPS, item)
             R.id.filter_frozen_apps -> changeAppsFilter(HailData.FILTER_FROZEN_APPS, item)
             R.id.filter_unfrozen_apps -> changeAppsFilter(HailData.FILTER_UNFROZEN_APPS, item)
         }

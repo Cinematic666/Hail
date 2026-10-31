@@ -24,6 +24,16 @@
                         android:title="@string/filter_system_apps"/>
             </group>
             <group
+                    android:id="@+id/group_filter_discovered_state"
+                    android:checkableBehavior="all">
+                <item
+                        android:id="@+id/filter_disabled_apps"
+                        android:title="@string/filter_disabled_apps"/>
+                <item
+                        android:id="@+id/filter_hidden_apps"
+                        android:title="@string/filter_hidden_apps"/>
+            </group>
+            <group
                     android:id="@+id/group_filter_frozen"
                     android:checkableBehavior="all">
                 <item

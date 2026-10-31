@@ -251,6 +251,8 @@
     <string name="rule_deleted">Rule deleted</string>
 
     <string name="enhanced_navigation">Navigation and lists</string>
+    <string name="filter_disabled_apps">Include disabled apps</string>
+    <string name="filter_hidden_apps">Include hidden apps</string>
     <string name="full_backup_select_categories">Tags and tracked applications are always included. Choose whether to include additional app files and supported preferences.</string>
     <string name="full_backup_additional_files">Additional app files</string>
     <string name="full_backup_preferences">Supported preferences</string>

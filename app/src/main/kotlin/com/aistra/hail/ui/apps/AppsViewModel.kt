@@ -95,6 +95,7 @@ class AppsViewModel(application: Application) : AndroidViewModel(application) {
         query: String?
     ): List<ApplicationInfo> {
         val pm = getApplication<HailApp>().packageManager
+        val discoveryByPackage = discovery.value.orEmpty().associateBy { it.packageName }
         return withContext(Dispatchers.Default) {
             return@withContext appList.filter {
                 ((HailData.filterUserApps && !it.isSystemApp)
@@ -102,6 +103,8 @@ class AppsViewModel(application: Application) : AndroidViewModel(application) {
 
                         && ((HailData.filterFrozenApps && it.isAppFrozen)
                         || (HailData.filterUnfrozenApps && !it.isAppFrozen))
+                        && (HailData.filterDisabledApps || discoveryByPackage[it.packageName]?.enabled != false)
+                        && (HailData.filterHiddenApps || discoveryByPackage[it.packageName]?.hidden != true)
                         // Search apps
                         && ((HailData.nineKeySearch
                         && (NineKeySearch.search(query, it.packageName, it.loadLabel(pm).toString())))
