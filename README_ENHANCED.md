@@ -1,4 +1,4 @@
-# Hail Enhanced — v1.11.0-enhanced.6 test build
+# Hail Enhanced — v1.11.0-enhanced.7 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 
@@ -60,3 +60,9 @@ This release integrates the upstream `main` snapshot `67a43c8ea7d43eddf51d840f36
 - Preserves existing tag IDs, legacy JSON format and backup import/export.
 
 Testing: :app:testDebugUnitTest :app:assembleRelease.
+
+## Enhanced.7 — save hardening
+
+- Preserve the selected category by its stable tag ID when edited categories are reordered.
+- Preserve apps added by another operation while a tag-editing session was open; do not silently strip their assignments.
+- Save behavior remains staged; this is an isolated development build, not a stable release.
