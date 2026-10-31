@@ -279,6 +279,7 @@ class TagEditorDialog(private val home: HomeFragment) {
         val prevApps = HailData.checkedList.toList()
         val prevAssignments = prevApps.associate { it.packageName to it.tagIdList.toList() }
         val nextAssignments = session.allAssignments()
+        val newlyUnassigned = session.newlyUnassignedPackages()
         try {
             HailData.tags.clear()
             HailData.tags.addAll(session.tags)
@@ -289,7 +290,8 @@ class TagEditorDialog(private val home: HomeFragment) {
                 app.tagIdList.clear()
                 app.tagIdList.addAll(editedTags)
             }
-            HailData.checkedList.removeAll { it.tagIdList.isEmpty() }
+            // Remove only apps orphaned by this edit, never preexisting/unrelated records.
+            HailData.checkedList.removeAll { it.packageName in newlyUnassigned }
             HailData.saveTags()
             HailData.saveApps()
         } catch (error: Exception) {
