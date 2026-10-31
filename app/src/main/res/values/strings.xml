@@ -214,4 +214,39 @@
     <string name="tag_editor_v2_fixed">Pinned first</string>
     <string name="tag_editor_v2_actions">More category actions</string>
 
+
+    <string name="navigation_layout">Navigation layout</string>
+    <string name="navigation_auto">Automatic (orientation-aware)</string>
+    <string name="navigation_bottom">Bottom navigation</string>
+    <string name="navigation_rail">Navigation rail</string>
+    <string name="navigation_bottom_compact">Compact bottom navigation</string>
+    <string name="navigation_rail_compact">Compact navigation rail</string>
+    <string name="app_list_layout">Application list layout</string>
+    <string name="app_list_standard">Standard list</string>
+    <string name="app_list_compact">Compact list</string>
+    <string name="app_list_two_columns">Two columns</string>
+    <string name="app_list_three_columns">Three columns</string>
+    <string name="app_list_four_columns">Four columns</string>
+    <string name="enhanced_profiles">Freeze profiles</string>
+    <string name="profile_manage">Manage profiles</string>
+    <string name="profile_create">Create from tracked apps</string>
+    <string name="profile_name">Profile name</string>
+    <string name="profile_applied">Profile applied: %1$s</string>
+    <string name="profile_apply">Apply profile</string>
+    <string name="profile_apply_anyway">Apply despite conflicts</string>
+    <string name="profile_conflicts">This profile has %1$d conflicting package assignments across saved profiles. Applying it will use this profile's states for those packages. Continue?</string>
+    <string name="profile_shortcut">Add dynamic shortcut</string>
+    <string name="profile_pin_shortcut">Pin to home screen</string>
+    <string name="profile_delete">Delete profile</string>
+    <string name="profile_deleted">Profile deleted</string>
+    <string name="profile_created">Profile created</string>
+    <string name="enhanced_automation">Automation</string>
+    <string name="rule_engine_enabled">Enable rule engine</string>
+    <string name="rule_manage">Manage automation rules</string>
+    <string name="rule_add_screen_off">Add screen-off freeze rule</string>
+    <string name="rule_created">Automation rule created. Enable the rule engine to activate it.</string>
+    <string name="rule_no_tracked_apps">Track at least one application before creating a rule or profile.</string>
+    <string name="rule_delete">Delete rule</string>
+    <string name="rule_toggle">Enable / disable rule</string>
+    <string name="rule_deleted">Rule deleted</string>
 </resources>

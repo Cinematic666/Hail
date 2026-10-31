@@ -1,6 +1,9 @@
 package com.aistra.hail.ui.apps
 
 import android.os.Bundle
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
 import android.provider.Settings
 import android.text.InputType
 import android.view.*
@@ -8,6 +11,7 @@ import android.widget.CompoundButton
 import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.viewModels
@@ -48,6 +52,13 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
     private val isQueryChanged get() = model.query.value != lastQuery
     private var contextMenuInfo: ContextMenu.ContextMenuInfo? = null
 
+
+    private var packageReceiverRegistered = false
+    private val packageChangesReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context, intent: Intent) {
+            model.updateAppList()
+        }
+    }
 
     private var exportApkPkg: String? = null
     private val exportApk =
@@ -121,6 +132,35 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
         }
 
         return binding.root
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (!packageReceiverRegistered) {
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addAction(Intent.ACTION_PACKAGE_CHANGED)
+                addAction(Intent.ACTION_PACKAGE_REPLACED)
+                addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+                addDataScheme("package")
+            }
+            ContextCompat.registerReceiver(
+                requireContext(),
+                packageChangesReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            packageReceiverRegistered = true
+        }
+    }
+
+    override fun onStop() {
+        if (packageReceiverRegistered) {
+            runCatching { requireContext().unregisterReceiver(packageChangesReceiver) }
+            packageReceiverRegistered = false
+        }
+        super.onStop()
     }
 
     override fun onResume() {

@@ -220,4 +220,39 @@
     <string name="tag_editor_v2_fixed">Закреплён первым</string>
     <string name="tag_editor_v2_actions">Действия с категорией</string>
 
+
+    <string name="navigation_layout">Расположение навигации</string>
+    <string name="navigation_auto">Автоматически (с учётом ориентации)</string>
+    <string name="navigation_bottom">Нижняя навигация</string>
+    <string name="navigation_rail">Боковая панель</string>
+    <string name="navigation_bottom_compact">Компактная нижняя навигация</string>
+    <string name="navigation_rail_compact">Компактная боковая панель</string>
+    <string name="app_list_layout">Вид списка приложений</string>
+    <string name="app_list_standard">Обычный список</string>
+    <string name="app_list_compact">Компактный список</string>
+    <string name="app_list_two_columns">Два столбца</string>
+    <string name="app_list_three_columns">Три столбца</string>
+    <string name="app_list_four_columns">Четыре столбца</string>
+    <string name="enhanced_profiles">Профили заморозки</string>
+    <string name="profile_manage">Управление профилями</string>
+    <string name="profile_create">Создать из отслеживаемых приложений</string>
+    <string name="profile_name">Название профиля</string>
+    <string name="profile_applied">Профиль применён: %1$s</string>
+    <string name="profile_apply">Применить профиль</string>
+    <string name="profile_apply_anyway">Применить несмотря на конфликты</string>
+    <string name="profile_conflicts">В %1$d назначениях пакетов есть противоречия с другими сохранёнными профилями. При применении будут использованы состояния этого профиля. Продолжить?</string>
+    <string name="profile_shortcut">Добавить динамический ярлык</string>
+    <string name="profile_pin_shortcut">Закрепить на главном экране</string>
+    <string name="profile_delete">Удалить профиль</string>
+    <string name="profile_deleted">Профиль удалён</string>
+    <string name="profile_created">Профиль создан</string>
+    <string name="enhanced_automation">Автоматизация</string>
+    <string name="rule_engine_enabled">Включить движок правил</string>
+    <string name="rule_manage">Управление правилами автоматизации</string>
+    <string name="rule_add_screen_off">Добавить правило заморозки при блокировке</string>
+    <string name="rule_created">Правило создано. Для его активации включите движок правил.</string>
+    <string name="rule_no_tracked_apps">Сначала добавьте хотя бы одно приложение в отслеживаемые.</string>
+    <string name="rule_delete">Удалить правило</string>
+    <string name="rule_toggle">Включить / выключить правило</string>
+    <string name="rule_deleted">Правило удалено</string>
 </resources>

@@ -49,6 +49,20 @@
         <item>@string/mode_privapp_stop</item>
         <item>@string/mode_privapp_disable</item>
     </string-array>
+    <string-array name="navigation_layout_entries">
+        <item>@string/navigation_auto</item>
+        <item>@string/navigation_bottom</item>
+        <item>@string/navigation_rail</item>
+        <item>@string/navigation_bottom_compact</item>
+        <item>@string/navigation_rail_compact</item>
+    </string-array>
+    <string-array name="app_list_layout_entries">
+        <item>@string/app_list_standard</item>
+        <item>@string/app_list_compact</item>
+        <item>@string/app_list_two_columns</item>
+        <item>@string/app_list_three_columns</item>
+        <item>@string/app_list_four_columns</item>
+    </string-array>
     <string-array name="app_theme_entries">
         <item>@string/follow_system</item>
         <item>@string/theme_light</item>

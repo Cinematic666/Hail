@@ -24,12 +24,17 @@ import com.aistra.hail.extensions.*
 import com.aistra.hail.utils.HPolicy
 import com.aistra.hail.utils.HUI
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.navigationrail.NavigationRailView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
 class MainActivity : AppCompatActivity(), NavController.OnDestinationChangedListener {
     lateinit var fab: ExtendedFloatingActionButton
     lateinit var appbar: AppBarLayout
+    private var bottomNavigation: BottomNavigationView? = null
+    private var navigationRail: NavigationRailView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,8 +78,11 @@ class MainActivity : AppCompatActivity(), NavController.OnDestinationChangedList
             R.id.nav_home, R.id.nav_apps, R.id.nav_settings, R.id.nav_about
         ).build()
         setupActionBarWithNavController(navController, appBarConfiguration)
+        bottomNavigation = bottomNav
+        navigationRail = navRail
         bottomNav?.setupWithNavController(navController)
         navRail?.setupWithNavController(navController)
+        applyNavigationLayout()
 
         val isRtl = isRtl
         val isLandscape = isLandscape
@@ -84,6 +92,24 @@ class MainActivity : AppCompatActivity(), NavController.OnDestinationChangedList
         bottomNav?.applyDefaultInsetter { paddingRelative(isRtl, start = true, end = true, bottom = true) }
         navRail?.applyDefaultInsetter { paddingRelative(isRtl, start = true, top = true, bottom = true) }
         fab.applyDefaultInsetter { marginRelative(isRtl, end = true, bottom = isLandscape) }
+    }
+
+    fun applyNavigationLayout(layout: String = HailData.navigationLayout) {
+        val useRail = when (layout) {
+            HailData.NAV_RAIL, HailData.NAV_RAIL_COMPACT -> true
+            HailData.NAV_BOTTOM, HailData.NAV_BOTTOM_COMPACT -> false
+            else -> isLandscape
+        }
+        val compact = layout == HailData.NAV_BOTTOM_COMPACT || layout == HailData.NAV_RAIL_COMPACT
+        bottomNavigation?.isVisible = !useRail
+        navigationRail?.isVisible = useRail
+        val labelMode = if (compact) {
+            NavigationBarView.LABEL_VISIBILITY_UNLABELED
+        } else {
+            NavigationBarView.LABEL_VISIBILITY_LABELED
+        }
+        bottomNavigation?.labelVisibilityMode = labelMode
+        navigationRail?.labelVisibilityMode = labelMode
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
