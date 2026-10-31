@@ -1,19 +1,14 @@
-name: Hail Enhanced v1.11.0-enhanced.8 test build
+name: Hail Enhanced v1.11.0-enhanced.9 stable signed build
 
 on:
   push:
     branches:
-      - enhanced/tag-editor-v1.11.0
-      - enhanced/roadmap-v1.11.0
-      - enhanced/tag-manager-redesign
-      - enhanced/tag-manager-hardening
-      - enhanced/ui-menu-compact
+      - enhanced/backup-signing-v1
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Build only the latest commit of each Enhanced development branch.
 concurrency:
   group: hail-enhanced-${{ github.ref }}
   cancel-in-progress: true
@@ -39,13 +34,51 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests and build release APK
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease
+      - name: Run unit tests
+        run: ./gradlew --no-daemon :app:testDebugUnitTest
 
-      - name: Upload test APK
+      - name: Prepare permanent release signing
+        id: signing
+        env:
+          HAIL_SIGNING_KEYSTORE_BASE64: ${{ secrets.HAIL_SIGNING_KEYSTORE_BASE64 }}
+          HAIL_SIGNING_STORE_PASSWORD: ${{ secrets.HAIL_SIGNING_STORE_PASSWORD }}
+          HAIL_SIGNING_KEY_ALIAS: ${{ secrets.HAIL_SIGNING_KEY_ALIAS }}
+          HAIL_SIGNING_KEY_PASSWORD: ${{ secrets.HAIL_SIGNING_KEY_PASSWORD }}
+        run: |
+          if [ -z "$HAIL_SIGNING_KEYSTORE_BASE64" ] || [ -z "$HAIL_SIGNING_STORE_PASSWORD" ] || [ -z "$HAIL_SIGNING_KEY_ALIAS" ] || [ -z "$HAIL_SIGNING_KEY_PASSWORD" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Signing secrets are not configured. Unit tests ran; signed APK build was skipped."
+            exit 0
+          fi
+          KEYSTORE_PATH="$RUNNER_TEMP/hail-enhanced-release.jks"
+          printf '%s' "$HAIL_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          echo "HAIL_SIGNING_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build permanently signed release APK
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          HAIL_REQUIRE_RELEASE_SIGNING: "true"
+          HAIL_SIGNING_STORE_PASSWORD: ${{ secrets.HAIL_SIGNING_STORE_PASSWORD }}
+          HAIL_SIGNING_KEY_ALIAS: ${{ secrets.HAIL_SIGNING_KEY_ALIAS }}
+          HAIL_SIGNING_KEY_PASSWORD: ${{ secrets.HAIL_SIGNING_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :app:assembleRelease
+
+      - name: Verify APK signature and checksum
+        if: steps.signing.outputs.ready == 'true'
+        run: |
+          APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          keytool -printcert -jarfile "$APK"
+          sha256sum "$APK"
+
+      - name: Upload permanently signed APK
+        if: steps.signing.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: Hail-Enhanced-v1.11.0-enhanced.8-test
+          name: Hail-Enhanced-v1.11.0-enhanced.9-signed
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
