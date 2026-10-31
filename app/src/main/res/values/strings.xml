@@ -186,6 +186,13 @@
 <string name="tag_backup_import_success">Imported %1$d tags and %2$d app assignments</string>
 <string name="tag_backup_error">Backup operation failed: %1$s</string>
 <string name="action_backup_menu">Backup and restore</string>
+<string name="full_backup_export">Export full app backup</string>
+<string name="full_backup_import">Restore full app backup</string>
+<string name="full_backup_export_success">Full app backup saved successfully</string>
+<string name="full_backup_import_title">Restore Hail app backup?</string>
+<string name="full_backup_import_summary">The archive contains %1$d tags, %2$d tracked apps, %3$d app files and %4$d restorable preferences. Tracked apps, tags and matching preferences will be replaced with the saved values; archived app files will be merged. Working mode, biometric login and auto-freeze activation are reset. Android permissions, Shizuku/Dhizuku grants, device-owner status, shortcuts pinned by the launcher and actual freeze states are not included. Reconfigure permissions and working mode after restore. Files not present in the archive are kept.</string>
+<string name="full_backup_import_confirm">Restore backup</string>
+<string name="full_backup_import_success">Full backup restored. Reconfigure working mode and required permissions.</string>
 <string name="tag_manage_apps">Manage category apps</string>
 <string name="tag_apps_target">Target category: %1$s</string>
 <string name="tag_source_category">Source category</string>
