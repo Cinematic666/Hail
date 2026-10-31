@@ -185,11 +185,7 @@
 <string name="tag_backup_import_confirm">Import</string>
 <string name="tag_backup_import_success">Imported %1$d tags and %2$d app assignments</string>
 <string name="tag_backup_error">Backup operation failed: %1$s</string>
-<string name="action_tools">Management</string>
-<string name="menu_category_tags">TAGS AND CATEGORIES</string>
-<string name="menu_category_backup">BACKUP AND RESTORE</string>
-<string name="menu_category_freeze">FREEZE CONTROL</string>
-<string name="menu_category_apps">APP LIST</string>
+<string name="action_backup_menu">Backup and restore</string>
 <string name="tag_manage_apps">Manage category apps</string>
 <string name="tag_apps_target">Target category: %1$s</string>
 <string name="tag_source_category">Source category</string>
