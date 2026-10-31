@@ -203,4 +203,12 @@
 <string name="tag_apps_move">Move</string>
 <string name="tag_apps_add_success">Added to category: %1$d</string>
 <string name="tag_apps_move_success">Moved to category: %1$d</string>
+
+    <string name="tag_editor_v2_hint">Tap a category to manage its apps. Drag the handle to change the order; use the menu for more actions.</string>
+    <string name="tag_editor_v2_summary">%1$d categories · %2$d apps</string>
+    <string name="tag_editor_v2_pending">Unsaved changes</string>
+    <string name="tag_editor_v2_staged">Changes are saved only when you tap Save in the category editor.</string>
+    <string name="tag_editor_v2_fixed">Pinned first</string>
+    <string name="tag_editor_v2_actions">More category actions</string>
+
 </resources>

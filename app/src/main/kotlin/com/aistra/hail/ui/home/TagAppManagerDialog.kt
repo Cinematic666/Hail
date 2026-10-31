@@ -18,19 +18,21 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aistra.hail.R
 import com.aistra.hail.app.AppInfo
 import com.aistra.hail.app.HailData
-import com.aistra.hail.app.TagAssignment
-import com.aistra.hail.app.TagAssignmentManager
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import android.widget.FrameLayout
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 
 internal class TagAppManagerDialog(
     private val context: Context,
+    private val session: TagEditSession,
     private val targetTag: Pair<String, Int>,
     private val onChanged: () -> Unit
 ) {
-    private val sourceTags = HailData.tags.filter { it.second != targetTag.second }
+    private val sourceTags = session.tags.filter { it.second != targetTag.second }
     private val selectedPackages = linkedSetOf<String>()
     private var visibleApps: List<AppInfo> = emptyList()
 
@@ -55,11 +57,19 @@ internal class TagAppManagerDialog(
 
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(context.dp(20), context.dp(8), context.dp(20), context.dp(4))
+            setPadding(context.dp(20), context.dp(14), context.dp(20), context.dp(20))
         }
+        val title = TextView(context).apply {
+            text = context.getString(R.string.tag_manage_apps)
+            textSize = 22f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, context.dp(8))
+        }
+        content.addView(title)
         val targetLabel = TextView(context).apply {
             text = context.getString(R.string.tag_apps_target, targetTag.first)
-            textSize = 15f
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
             setPadding(0, 0, 0, context.dp(8))
         }
         val sourceLabel = TextView(context).apply {
@@ -172,11 +182,19 @@ internal class TagAppManagerDialog(
         content.addView(listContainer)
         content.addView(actions)
 
-        val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.tag_manage_apps)
-            .setView(content)
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
+        val footerHint = TextView(context).apply {
+            text = context.getString(R.string.tag_editor_v2_staged)
+            textSize = 12f
+            alpha = .72f
+            setPadding(0, context.dp(6), 0, 0)
+        }
+        content.addView(footerHint)
+        val dialog = BottomSheetDialog(context)
+        dialog.setContentView(content)
+        dialog.setOnShowListener {
+            dialog.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)
+                ?.let { BottomSheetBehavior.from(it).state = BottomSheetBehavior.STATE_EXPANDED }
+        }
 
         sourceSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
@@ -206,7 +224,7 @@ internal class TagAppManagerDialog(
         val sourceId = currentSourceTag()?.second ?: return
         val query = searchInput.text?.toString()?.trim().orEmpty()
         val sourceApps = HailData.checkedList
-            .filter { sourceId in it.tagIdList }
+            .filter { sourceId in session.tagsFor(it.packageName) }
             .sortedBy { it.name.toString().lowercase() }
         visibleApps = sourceApps.filter { app ->
             query.isEmpty() ||
@@ -232,7 +250,7 @@ internal class TagAppManagerDialog(
         val sourceId = currentSourceTag()?.second
         val eligibleSelected = if (sourceId == null) 0 else selectedPackages.count { packageName ->
             HailData.checkedList.any {
-                it.packageName == packageName && sourceId in it.tagIdList
+                it.packageName == packageName && sourceId in session.tagsFor(it.packageName)
             }
         }
         selectedCount.text = context.getString(R.string.tag_selected_count, eligibleSelected)
@@ -250,43 +268,18 @@ internal class TagAppManagerDialog(
         val sourceId = currentSourceTag()?.second ?: return
         val selected = selectedPackages.toSet()
         if (selected.isEmpty()) return
-
-        val current = HailData.checkedList.map {
-            TagAssignment(it.packageName, it.tagIdList.toList())
-        }
-        val plan = TagAssignmentManager.apply(
-            assignments = current,
-            sourceTagId = sourceId,
-            targetTagId = targetTag.second,
-            selectedPackages = selected,
-            move = move
-        )
-        if (plan.changedCount == 0) {
-            selectedPackages.clear()
-            refreshApps()
-            return
-        }
-
-        val updatedByPackage = plan.assignments.associateBy { it.packageName }
-        HailData.checkedList.forEach { app ->
-            val updated = updatedByPackage[app.packageName] ?: return@forEach
-            if (app.tagIdList != updated.tagIds) {
-                app.tagIdList.clear()
-                app.tagIdList.addAll(updated.tagIds)
-            }
-        }
-        HailData.saveApps()
+        val count = session.assign(sourceId, targetTag.second, selected, move)
         selectedPackages.clear()
-        onChanged()
+        if (count > 0) onChanged()
         refreshApps()
 
         Toast.makeText(
             context,
             context.getString(
                 if (move) R.string.tag_apps_move_success else R.string.tag_apps_add_success,
-                plan.changedCount
-            ),
-            Toast.LENGTH_LONG
+                count
+            ) + " · " + context.getString(R.string.tag_editor_v2_pending),
+            Toast.LENGTH_SHORT
         ).show()
     }
 

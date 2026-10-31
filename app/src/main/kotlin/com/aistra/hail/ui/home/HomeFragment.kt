@@ -54,6 +54,7 @@ class HomeFragment : MainFragment() {
             tab.text = tags[position].first
         }.attach()
         binding.tabs.post { bindTagLongPress() }
+        binding.manageTagsButton.setOnClickListener { TagEditorDialog(this).show() }
         binding.tabs.applyDefaultInsetter { paddingRelative(isRtl, start = !activity.isLandscape, end = true) }
         return binding.root
     }

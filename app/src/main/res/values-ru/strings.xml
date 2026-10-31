@@ -209,4 +209,12 @@
 <string name="tag_apps_move">Перенести</string>
 <string name="tag_apps_add_success">Добавлено в категорию: %1$d</string>
 <string name="tag_apps_move_success">Перенесено в категорию: %1$d</string>
+
+    <string name="tag_editor_v2_hint">Нажмите на категорию для управления приложениями. Потяните за значок для сортировки, дополнительные действия — в меню.</string>
+    <string name="tag_editor_v2_summary">Категорий: %1$d · приложений: %2$d</string>
+    <string name="tag_editor_v2_pending">Есть несохранённые изменения</string>
+    <string name="tag_editor_v2_staged">Изменения применятся только после нажатия «Сохранить» в редакторе категорий.</string>
+    <string name="tag_editor_v2_fixed">Закреплён первым</string>
+    <string name="tag_editor_v2_actions">Действия с категорией</string>
+
 </resources>

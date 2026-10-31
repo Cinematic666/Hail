@@ -1,4 +1,4 @@
-# Hail Enhanced — v1.11.0-enhanced.5 test build
+# Hail Enhanced — v1.11.0-enhanced.6 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 
@@ -48,3 +48,15 @@ Only tag definitions and app-to-tag assignments are imported. For apps already t
 ## Enhanced.5 — upstream baseline sync
 
 This release integrates the upstream `main` snapshot `67a43c8ea7d43eddf51d840f3615b97ce6079c9b` into a separate development branch without changing `main` or Enhanced.4. It retains the upstream Jailbreak Disable mode, Settings updates, and translations together with Enhanced tag editing, assignments, backup and parallel-install package name. A new typed operation report is a standalone model only; it is **not yet wired to Root/Shizuku or used for freeze actions**. The real-device safety gate still applies.
+
+## Enhanced.6 — modern category manager
+
+- Accessible direct settings button next to the scrollable category tabs.
+- Material bottom sheets with readable cards, counts and one contextual action menu.
+- Drag handle for reorder; fixed Default category remains pinned.
+- Tap a category to choose and bulk-add/move apps from another category.
+- **All changes are staged together**: Save commits tag definitions and assignments; Back/Cancel/swipe discards the entire session.
+- No working-mode changes or freeze commands are executed from the redesigned category editor.
+- Preserves existing tag IDs, legacy JSON format and backup import/export.
+
+Testing: :app:testDebugUnitTest :app:assembleRelease.
