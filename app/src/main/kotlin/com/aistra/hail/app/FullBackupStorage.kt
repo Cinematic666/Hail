@@ -72,18 +72,23 @@ internal object FullBackupStorage {
         )
 
         try {
-            applyPayload(payload, mode)
+            applyPayload(payload, mode, resetDeviceBoundPreferences = true)
             writeAtomically(
                 journalFile,
                 JSONObject().put("state", "COMMITTED").put("sha256", snapshotHash).toString().toByteArray()
             )
             cleanupRecovery(recovery)
         } catch (error: Exception) {
-            runCatching {
+            val rollbackResult = runCatching {
                 val rollback = FullBackupArchive.decode(snapshotBytes.inputStream())
-                applyPayload(rollback, FullBackupRestoreMode.REPLACE)
+                applyPayload(rollback, FullBackupRestoreMode.REPLACE, resetDeviceBoundPreferences = false)
             }
-            cleanupRecovery(recovery)
+            if (rollbackResult.isSuccess) {
+                cleanupRecovery(recovery)
+            } else {
+                error.addSuppressed(rollbackResult.exceptionOrNull()!!)
+                throw IllegalStateException("Restore failed and rollback remains pending in the recovery journal", error)
+            }
             throw error
         }
     }
@@ -106,14 +111,18 @@ internal object FullBackupStorage {
                     "Restore recovery snapshot checksum mismatch"
                 }
                 val rollback = FullBackupArchive.decode(bytes.inputStream())
-                applyPayload(rollback, FullBackupRestoreMode.REPLACE)
+                applyPayload(rollback, FullBackupRestoreMode.REPLACE, resetDeviceBoundPreferences = false)
                 cleanupRecovery(recovery)
             }
             else -> throw IllegalStateException("Restore recovery journal is invalid")
         }
     }
 
-    private fun applyPayload(payload: FullBackupPayload, mode: FullBackupRestoreMode) {
+    private fun applyPayload(
+        payload: FullBackupPayload,
+        mode: FullBackupRestoreMode,
+        resetDeviceBoundPreferences: Boolean
+    ) {
         val root = app.filesDir.canonicalFile
         val rootPrefix = root.path + File.separator
         val filesToRestore = payload.files.filterNot { it.path == TAGS_PATH || it.path == APPS_PATH }
@@ -152,10 +161,12 @@ internal object FullBackupStorage {
                     .forEach(editor::remove)
             }
             payload.preferences.forEach { (key, value) -> editor.putTyped(key, value) }
-            // Device-bound permissions and Keystore-backed biometric state cannot be restored.
-            editor.putString(HailData.WORKING_MODE, HailData.MODE_DEFAULT)
-            editor.putBoolean(HailData.BIOMETRIC_LOGIN, false)
-            editor.putBoolean(HailData.AUTO_FREEZE_AFTER_LOCK, false)
+            if (resetDeviceBoundPreferences) {
+                // Device-bound permissions and Keystore-backed biometric state cannot be restored.
+                editor.putString(HailData.WORKING_MODE, HailData.MODE_DEFAULT)
+                editor.putBoolean(HailData.BIOMETRIC_LOGIN, false)
+                editor.putBoolean(HailData.AUTO_FREEZE_AFTER_LOCK, false)
+            }
             check(editor.commit()) { "Could not save restored preferences" }
 
             HailData.restoreFullBackup(payload.tagBackup)
