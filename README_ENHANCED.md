@@ -1,15 +1,15 @@
-# Hail Enhanced — v1.11.0-enhanced.7 test build
+# Hail Enhanced — v1.11.0-enhanced.8 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 
 ## What changed
 
-- Groups home-screen actions into one Management dropdown with Tags, Backup and Restore, Freeze Control, and App List sections.
+- Shows home-screen actions directly in the three-dot overflow menu; only backup export/import stay grouped in a Backup and restore submenu.
 - Adds per-category bulk app management: select apps from a source category, then add them to the current category or move them out of the source category.
 - Supports app search and select-all for the currently filtered source-category list.
 
-- Adds a tag manager to the home-screen overflow menu.
-- Long-pressing a tab also opens the tag manager.
+- Opens the tag manager by long-pressing a category tab; the Default tab remains visible for access when it is the only category.
+- Removes the redundant settings gear next to the category tabs.
 - Reorders custom tags using drag-and-drop or up/down controls.
 - Keeps the built-in Default tag pinned first.
 - Renaming keeps the existing tag ID, preserving app assignments.
@@ -41,7 +41,7 @@ To migrate from the original Hail installation without modifying it, use a root-
 - `/data/user/0/com.aistra.hail/files/v1/tags.json`
 - `/data/user/0/com.aistra.hail/files/v1/apps.json`
 
-Place both files in a ZIP archive (at the root or inside a `v1/` folder), then choose **Home → Tag backup → Import tag configuration** in Hail Enhanced.
+Place both files in a ZIP archive (at the root or inside a `v1/` folder), then choose **Home → three-dot menu → Backup and restore → Import tag configuration** in Hail Enhanced.
 
 Only tag definitions and app-to-tag assignments are imported. For apps already tracked in Enhanced, existing pin and whitelist flags are preserved; newly imported app entries restore those flags from the backup. Frozen states, permissions, working mode, and other preferences are not imported or changed. Apps already in Enhanced but absent from the archive are retained; assignments to tags that no longer exist are moved to Default.
 
@@ -51,12 +51,13 @@ This release integrates the upstream `main` snapshot `67a43c8ea7d43eddf51d840f36
 
 ## Enhanced.6 — modern category manager
 
-- Accessible direct settings button next to the scrollable category tabs.
+- Tag editor opened by long-pressing any category tab; the Default tab remains visible even when it is the only category.
 - Material bottom sheets with readable cards, counts and one contextual action menu.
 - Drag handle for reorder; fixed Default category remains pinned.
 - Tap a category to choose and bulk-add/move apps from another category.
 - **All changes are staged together**: Save commits tag definitions and assignments; Back/Cancel/swipe discards the entire session.
 - No working-mode changes or freeze commands are executed from the redesigned category editor.
+- Home-screen overflow actions are visible immediately; only backup import/export are nested.
 - Preserves existing tag IDs, legacy JSON format and backup import/export.
 
 Testing: :app:testDebugUnitTest :app:assembleRelease.
