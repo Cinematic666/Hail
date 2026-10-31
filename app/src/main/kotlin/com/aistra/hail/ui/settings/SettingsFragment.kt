@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.view.*
+import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
@@ -39,6 +40,13 @@ import com.aistra.hail.R
 import com.aistra.hail.app.AppManager
 import com.aistra.hail.app.HailApi
 import com.aistra.hail.app.HailData
+import com.aistra.hail.app.FreezeProfileManager
+import com.aistra.hail.app.FreezeProfileStore
+import com.aistra.hail.app.FreezeRuleStore
+import com.aistra.hail.enhanced.domain.FreezeProfile
+import com.aistra.hail.enhanced.domain.FreezeRule
+import com.aistra.hail.enhanced.domain.RuleAction
+import com.aistra.hail.enhanced.domain.RuleTrigger
 import com.aistra.hail.databinding.DialogInputBinding
 import com.aistra.hail.ui.main.MainActivity
 import com.aistra.hail.ui.main.MainFragment
@@ -57,6 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.*
 import rikka.shizuku.Shizuku
+import java.util.UUID
 
 class SettingsFragment : MainFragment(), MenuProvider {
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -264,6 +273,64 @@ class SettingsFragment : MainFragment(), MenuProvider {
                 icon = { Icon(imageVector = Icons.Outlined.CleaningServices, contentDescription = null) },
                 onClick = ::resetDynamicShortcuts
             )
+
+            horizontalDivider()
+            preferenceCategory(
+                key = "enhanced_navigation",
+                title = { Text(text = stringResource(R.string.enhanced_navigation)) }
+            )
+            listPreference(
+                key = HailData.NAVIGATION_LAYOUT,
+                defaultValue = HailData.NAV_AUTO,
+                onValueChange = { _, value ->
+                    activity.applyNavigationLayout(value)
+                    true
+                },
+                values = HailData.NAVIGATION_LAYOUT_VALUES,
+                entriesId = R.array.navigation_layout_entries,
+                titleId = R.string.navigation_layout,
+                icon = Icons.Outlined.Navigation
+            )
+            listPreference(
+                key = HailData.APP_LIST_LAYOUT,
+                defaultValue = HailData.APP_LIST_STANDARD,
+                values = HailData.APP_LIST_LAYOUT_VALUES,
+                entriesId = R.array.app_list_layout_entries,
+                titleId = R.string.app_list_layout,
+                icon = Icons.Outlined.ViewList
+            )
+            horizontalDivider()
+            preferenceCategory(
+                key = "enhanced_profiles",
+                title = { Text(text = stringResource(R.string.enhanced_profiles)) }
+            )
+            preference(
+                key = "manage_profiles",
+                title = { Text(text = stringResource(R.string.profile_manage)) },
+                icon = { Icon(imageVector = Icons.Outlined.Folder, contentDescription = null) },
+                onClick = ::showProfilesDialog
+            )
+            horizontalDivider()
+            preferenceCategory(
+                key = "enhanced_automation",
+                title = { Text(text = stringResource(R.string.enhanced_automation)) }
+            )
+            switchPreference(
+                key = HailData.RULE_ENGINE_ENABLED,
+                defaultValue = false,
+                onValueChange = { _, value ->
+                    FreezeRuleStore(requireContext()).isEnabled = value
+                    true
+                },
+                titleId = R.string.rule_engine_enabled,
+                icon = Icons.Outlined.AutoMode
+            )
+            preference(
+                key = "manage_rules",
+                title = { Text(text = stringResource(R.string.rule_manage)) },
+                icon = { Icon(imageVector = Icons.Outlined.Rule, contentDescription = null) },
+                onClick = ::showRulesDialog
+            )
         }
     }
 
@@ -427,6 +494,158 @@ class SettingsFragment : MainFragment(), MenuProvider {
                     )
                 }
             }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun showProfilesDialog() {
+        val profiles = FreezeProfileStore(requireContext()).getAll()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.profile_manage)
+            .setItems(profiles.map { it.name }.toTypedArray()) { _, index ->
+                profiles.getOrNull(index)?.let(::showProfileActions)
+            }
+            .setPositiveButton(R.string.profile_create) { _, _ -> promptProfileName() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun promptProfileName() {
+        val input = EditText(requireContext()).apply {
+            hint = getString(R.string.profile_name)
+            setSingleLine()
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.profile_create)
+            .setView(input)
+            .setPositiveButton(R.string.action_save) { _, _ ->
+                runCatching {
+                    FreezeProfileManager.createFromTracked(requireContext(), input.text.toString())
+                }.onSuccess {
+                    HShortcuts.addProfileShortcut(it)
+                    HUI.showToast(R.string.profile_created)
+                }.onFailure {
+                    HUI.showToast(R.string.operation_failed, it.message ?: "Unknown", true)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showProfileActions(profile: FreezeProfile) {
+        val actions = arrayOf(
+            getString(R.string.profile_apply),
+            getString(R.string.profile_shortcut),
+            getString(R.string.profile_pin_shortcut),
+            getString(R.string.profile_delete)
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(profile.name)
+            .setItems(actions) { _, which ->
+                when (which) {
+                    0 -> applyProfile(profile, false)
+                    1 -> {
+                        HShortcuts.addProfileShortcut(profile)
+                        HUI.showToast(R.string.profile_created)
+                    }
+                    2 -> HShortcuts.addPinProfileShortcut(profile)
+                    3 -> MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.profile_delete)
+                        .setMessage(profile.name)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            FreezeProfileManager.delete(requireContext(), profile.id)
+                            HUI.showToast(R.string.profile_deleted)
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun applyProfile(profile: FreezeProfile, allowConflicts: Boolean) {
+        runCatching {
+            FreezeProfileManager.apply(requireContext(), profile.id, allowConflicts)
+        }.onSuccess { result ->
+            if (result.conflicts > 0 && !allowConflicts) {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.profile_apply)
+                    .setMessage(getString(R.string.profile_conflicts, result.conflicts))
+                    .setPositiveButton(R.string.profile_apply_anyway) { _, _ ->
+                        applyProfile(profile, true)
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            } else if (result.complete) {
+                HUI.showToast(R.string.profile_applied, profile.name)
+            } else {
+                HUI.showToast(R.string.permission_denied)
+            }
+        }.onFailure {
+            HUI.showToast(R.string.operation_failed, it.message ?: "Unknown", true)
+        }
+    }
+
+    private fun showRulesDialog() {
+        val store = FreezeRuleStore(requireContext())
+        val rules = store.getRules()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.rule_manage)
+            .setItems(rules.map { it.name + if (it.enabled) " ✓" else " (off)" }.toTypedArray()) { _, index ->
+                rules.getOrNull(index)?.let(::showRuleActions)
+            }
+            .setPositiveButton(R.string.rule_add_screen_off) { _, _ -> createScreenOffRule() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun createScreenOffRule() {
+        val packages = HailData.checkedList
+            .filter { it.packageName != app.packageName }
+            .map { it.packageName }
+            .toSet()
+        if (packages.isEmpty()) {
+            HUI.showToast(R.string.rule_no_tracked_apps)
+            return
+        }
+        val store = FreezeRuleStore(requireContext())
+        val rule = FreezeRule(
+            id = UUID.randomUUID().toString(),
+            name = getString(R.string.rule_add_screen_off),
+            enabled = true,
+            trigger = RuleTrigger.SCREEN_OFF,
+            action = RuleAction.FREEZE,
+            packageNames = packages,
+            cooldownMillis = 30_000L
+        )
+        runCatching { store.saveRules(store.getRules() + rule) }
+            .onSuccess { HUI.showToast(R.string.rule_created) }
+            .onFailure { HUI.showToast(R.string.operation_failed, it.message ?: "Unknown", true) }
+    }
+
+    private fun showRuleActions(rule: FreezeRule) {
+        val store = FreezeRuleStore(requireContext())
+        val actions = arrayOf(getString(R.string.rule_toggle), getString(R.string.rule_delete))
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(rule.name)
+            .setItems(actions) { _, which ->
+                when (which) {
+                    0 -> {
+                        store.saveRules(store.getRules().map {
+                            if (it.id == rule.id) it.copy(enabled = !it.enabled) else it
+                        })
+                    }
+                    1 -> MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.rule_delete)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            store.saveRules(store.getRules().filterNot { it.id == rule.id })
+                            HUI.showToast(R.string.rule_deleted)
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     fun onWorkingModeChange(rememberState: MutableState<String>, mode: String): Boolean {
