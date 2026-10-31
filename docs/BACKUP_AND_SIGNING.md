@@ -63,7 +63,7 @@ The exporter includes the app's \`files/\` directory (including \`v1/tags.json\`
 ### Install the permanently signed build
 
 1. Confirm the migration ZIP is accessible outside the app.
-2. If Hail is configured as Device Owner, remove that role using Hail's owner-removal flow before uninstalling.
+2. If Hail is configured as Device Owner, stop before uninstalling and review that transition separately. Removing Device Owner can affect Android's app-hidden state; the portable backup does not preserve or replay those system states. Do not remove the owner role until the current freeze state has been checked.
 3. Uninstall the old debug-signed \`com.aistra.hail.enhanced\` app.
 4. Install the permanently signed Enhanced.9 APK.
 5. Open Hail Enhanced and choose **Home → three-dot menu → Backup and restore → Restore full app backup**.
