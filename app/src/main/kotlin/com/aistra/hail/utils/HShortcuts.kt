@@ -13,6 +13,7 @@ import com.aistra.hail.R
 import com.aistra.hail.app.AppInfo
 import com.aistra.hail.app.HailApi
 import com.aistra.hail.app.HailData
+import com.aistra.hail.enhanced.domain.FreezeProfile
 import me.zhanghai.android.appiconloader.AppIconLoader
 
 object HShortcuts {
@@ -93,6 +94,30 @@ object HShortcuts {
             )
         ).setShortLabel(app.getString(label)).setIntent(Intent(id)).build()
         ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
+    }
+
+    fun addProfileShortcut(profile: FreezeProfile) {
+        if (HailData.biometricLogin) return
+        val shortcut = ShortcutInfoCompat.Builder(app, "hail-profile-" + profile.id)
+            .setIcon(
+                getDrawableIcon(
+                    AppCompatResources.getDrawable(app, R.drawable.ic_round_frozen_shortcut)!!
+                )
+            )
+            .setShortLabel(profile.name.take(10))
+            .setLongLabel(profile.name)
+            .setIntent(HailApi.getIntentForProfile(profile.id))
+            .build()
+        ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
+    }
+
+    fun addPinProfileShortcut(profile: FreezeProfile) {
+        addPinShortcut(
+            AppCompatResources.getDrawable(app, R.drawable.ic_round_frozen_shortcut)!!,
+            "hail-profile-pin-" + profile.id,
+            profile.name,
+            HailApi.getIntentForProfile(profile.id)
+        )
     }
 
     fun removeAllDynamicShortcuts() {

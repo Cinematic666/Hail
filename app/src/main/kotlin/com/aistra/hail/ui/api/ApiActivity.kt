@@ -67,6 +67,7 @@ class ApiActivity : ComponentActivity() {
             HailApi.ACTION_FREEZE_AUTO -> setAutoFreeze(false)
             HailApi.ACTION_LOCK -> lockScreen(false)
             HailApi.ACTION_LOCK_FREEZE -> lockScreen(true)
+            HailApi.ACTION_APPLY_PROFILE -> applyProfile(requireProfileId)
             else -> throw IllegalArgumentException("Unknown action:\n$action")
         }
         return true
@@ -102,10 +103,28 @@ class ApiActivity : ComponentActivity() {
                 "freeze_auto" -> HailApi.ACTION_FREEZE_AUTO
                 "lock" -> HailApi.ACTION_LOCK
                 "lock_freeze" -> HailApi.ACTION_LOCK_FREEZE
+                "profile" -> HailApi.ACTION_APPLY_PROFILE
                 else -> throw IllegalArgumentException("Unknown host:\n${uri.host}")
             }
         )
     }
+
+    private fun applyProfile(profileId: String) {
+        val result = FreezeProfileManager.apply(this, profileId, allowConflicts = false)
+        if (result.conflicts > 0) {
+            throw IllegalStateException("This profile conflicts with another saved profile. Open Settings and confirm the switch.")
+        }
+        if (!result.complete) {
+            throw IllegalStateException("Some profile operations could not be verified.")
+        }
+        HUI.showToast(R.string.profile_applied, result.profile.name)
+    }
+
+    private val requireProfileId: String
+        get() = intent.run {
+            if (action == Intent.ACTION_VIEW) data?.getQueryParameter(HailApi.EXTRA_PROFILE_ID)
+            else getStringExtra(HailApi.EXTRA_PROFILE_ID)
+        }?.takeIf { it.isNotBlank() } ?: throw IllegalArgumentException("Profile ID must not be null")
 
     private fun setErrorDialog(t: Throwable) = setContent { AppTheme { ErrorDialog(t) } }
 

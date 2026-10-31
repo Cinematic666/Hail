@@ -32,6 +32,10 @@ object HailApi {
     /** @since 1.3.0 */
     const val ACTION_FREEZE_AUTO = "${BuildConfig.APPLICATION_ID}.action.FREEZE_AUTO"
 
+    /** Enhanced profile shortcut action. */
+    const val ACTION_APPLY_PROFILE = "${BuildConfig.APPLICATION_ID}.action.APPLY_PROFILE"
+    const val EXTRA_PROFILE_ID = "profile_id"
+
     /** @since 0.6.0 */
     const val ACTION_LOCK = "${BuildConfig.APPLICATION_ID}.action.LOCK"
 
@@ -44,4 +48,7 @@ object HailApi {
     fun Intent.addTag(tag: String) = putExtra(HailData.KEY_TAG, tag)
 
     fun getIntentForTag(action: String, tag: String) = Intent(action).addTag(tag)
+
+    fun getIntentForProfile(profileId: String) =
+        Intent(ACTION_APPLY_PROFILE).putExtra(EXTRA_PROFILE_ID, profileId)
 }
