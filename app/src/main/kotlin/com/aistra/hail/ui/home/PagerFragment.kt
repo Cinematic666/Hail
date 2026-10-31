@@ -444,10 +444,6 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
         }
     }
 
-    private fun showTagEditor() {
-        (parentFragment as? HomeFragment)?.let { TagEditorDialog(it).show() }
-    }
-
     fun refreshAfterTagConfigChanged() {
         if (_binding != null) updateCurrentList()
     }
@@ -557,10 +553,6 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
 
     override fun onMenuItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.action_manage_tags -> {
-                showTagEditor()
-                return true
-            }
             R.id.action_export_tag_backup -> {
                 (parentFragment as? HomeFragment)?.launchTagBackupExport()
                 return true
@@ -614,7 +606,7 @@ class PagerFragment : MainFragment(), PagerAdapter.OnItemClickListener, PagerAda
                 if (inited) {
                     query = newText
                     tabs?.run {
-                        isVisible = query.isEmpty() && tabCount > 1
+                        isVisible = query.isEmpty()
                     }
                     updateCurrentList()
                 } else inited = true
