@@ -155,6 +155,8 @@ class FullBackupArchiveTest {
                 .put("applicationId", "com.example.legacy")
                 .put("versionName", "legacy")
                 .put("createdAtEpochMs", 1L)
+                .put("fileCount", entries.size)
+                .put("preferenceCount", JSONObject(preferences).getJSONArray("entries").length())
             zip.writeEntry("manifest.json", manifest.toString())
             zip.writeEntry("preferences.json", preferences)
             entries.forEach { (name, value) -> zip.writeEntry(name, value) }
