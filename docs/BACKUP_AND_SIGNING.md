@@ -20,6 +20,8 @@ Add the following repository Actions secrets in **Settings → Secrets and varia
 - \`HAIL_SIGNING_KEY_ALIAS\`
 - \`HAIL_SIGNING_KEY_PASSWORD\`
 
+After saving all four secrets, open **Actions → Hail Enhanced v1.11.0-enhanced.9 stable signed build → Run workflow** and select this branch. The workflow first runs tests, then builds and uploads the permanently signed APK.
+
 The generated release certificate SHA-256 fingerprint is:
 
 \`AE:3C:A1:22:8D:75:91:7A:56:1A:A9:8E:FA:4B:59:59:AF:77:09:5E:1D:08:9D:26:67:3B:55:67:AF:A6:48:CB\`
