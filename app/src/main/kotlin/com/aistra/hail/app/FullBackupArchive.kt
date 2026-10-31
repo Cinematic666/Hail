@@ -26,7 +26,8 @@ internal object FullBackupArchive {
     private const val SCHEMA_VERSION = 1
     private const val MAX_ENTRIES = 256
     private const val MAX_FILE_BYTES = 8 * 1024 * 1024
-    private const val MAX_TOTAL_BYTES = 48 * 1024 * 1024
+    private const val MAX_TOTAL_FILE_BYTES = 40 * 1024 * 1024
+    private const val MAX_TOTAL_ARCHIVE_BYTES = 48 * 1024 * 1024
     private const val MAX_PREFERENCES = 512
     private const val MAX_KEY_LENGTH = 256
     private const val MAX_STRING_LENGTH = 8192
@@ -92,7 +93,7 @@ internal object FullBackupArchive {
                 if (!entry.isDirectory) {
                     val bytes = zip.readBounded(MAX_FILE_BYTES)
                     totalBytes += bytes.size
-                    require(totalBytes <= MAX_TOTAL_BYTES) { "Backup is too large" }
+                    require(totalBytes <= MAX_TOTAL_ARCHIVE_BYTES) { "Backup is too large" }
 
                     when {
                         entry.name == "manifest.json" -> {
@@ -124,6 +125,12 @@ internal object FullBackupArchive {
         val decodedPreferences = decodePreferences(preferenceJson)
         val normalizedFiles = validateFiles(files.map { FullBackupFile(it.key, it.value) })
         val tagBackup = decodeTagBackup(normalizedFiles)
+        require(manifest.optInt("fileCount", -1) == normalizedFiles.size) {
+            "Backup file count does not match its manifest"
+        }
+        require(manifest.optInt("preferenceCount", -1) == decodedPreferences.size) {
+            "Backup preference count does not match its manifest"
+        }
 
         return FullBackupPayload(
             files = normalizedFiles,
@@ -154,7 +161,7 @@ internal object FullBackupArchive {
             require(paths.add(file.path)) { "Duplicate app file: ${file.path}" }
             require(file.bytes.size <= MAX_FILE_BYTES) { "App file is too large: ${file.path}" }
             totalBytes += file.bytes.size
-            require(totalBytes <= MAX_TOTAL_BYTES) { "App data is too large to back up" }
+            require(totalBytes <= MAX_TOTAL_FILE_BYTES) { "App data is too large to back up" }
         }
         require("v1/tags.json" in paths && "v1/apps.json" in paths) {
             "Hail app data is incomplete: tags.json or apps.json is missing"
