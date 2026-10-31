@@ -196,6 +196,9 @@ def create_archive(
     # A never-used Hail install may not have written these lazy-loaded defaults yet.
     files.setdefault("v1/tags.json", b'[{"tag":"Default","id":0}]')
     files.setdefault("v1/apps.json", b"[]")
+    for state_path in ("v1/tags.json", "v1/apps.json"):
+        if len(files[state_path]) > 5 * 1024 * 1024:
+            raise ValueError(f"Tracked-app state file exceeds the Hail import limit: {state_path}")
     if len(files) > 254:
         raise ValueError("Unexpected number of app-data files")
     manifest = {
