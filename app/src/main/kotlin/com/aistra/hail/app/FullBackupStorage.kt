@@ -114,18 +114,20 @@ internal object FullBackupStorage {
     private fun writeAtomically(target: File, bytes: ByteArray) {
         val parent = target.parentFile ?: throw IOException("Restore target has no parent directory")
         if (!parent.exists() && !parent.mkdirs()) throw IOException("Could not create restore directory")
-        val temporary = File(parent, ".${target.name}.restore.tmp")
-        FileOutputStream(temporary).use { output ->
-            output.write(bytes)
-            output.fd.sync()
-        }
-        if (target.exists() && !target.delete()) {
-            temporary.delete()
-            throw IOException("Could not replace ${target.name}")
-        }
-        if (!temporary.renameTo(target)) {
-            temporary.delete()
-            throw IOException("Could not write ${target.name}")
+        val temporary = File.createTempFile(".${target.name}.", ".restore.tmp", parent)
+        try {
+            FileOutputStream(temporary).use { output ->
+                output.write(bytes)
+                output.fd.sync()
+            }
+            if (target.exists() && !target.delete()) {
+                throw IOException("Could not replace ${target.name}")
+            }
+            if (!temporary.renameTo(target)) {
+                throw IOException("Could not write ${target.name}")
+            }
+        } finally {
+            if (temporary.exists()) temporary.delete()
         }
     }
 }
