@@ -32,6 +32,8 @@
             android:title="@string/action_backup_menu"
             app:showAsAction="never">
         <menu>
+            <item android:id="@+id/action_export_full_backup" android:title="@string/full_backup_export" app:showAsAction="never"/>
+            <item android:id="@+id/action_import_full_backup" android:title="@string/full_backup_import" app:showAsAction="never"/>
             <item android:id="@+id/action_export_tag_backup" android:title="@string/tag_backup_export" app:showAsAction="never"/>
             <item android:id="@+id/action_import_tag_backup" android:title="@string/tag_backup_import" app:showAsAction="never"/>
         </menu>
