@@ -1,9 +1,10 @@
-name: Hail Enhanced v1.11.0-enhanced.9 stable signed build
+name: Hail Enhanced v1.11.0-enhanced.10 full modernization build
 
 on:
   push:
     branches:
       - enhanced/backup-signing-v1
+      - enhanced/full-modernization-v1
   workflow_dispatch:
 
 permissions:
@@ -89,7 +90,7 @@ jobs:
         if: steps.signing.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: Hail-Enhanced-v1.11.0-enhanced.9-signed
+          name: Hail-Enhanced-v1.11.0-enhanced.10-signed
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30

@@ -190,7 +190,7 @@
 <string name="full_backup_import">Restore full app backup</string>
 <string name="full_backup_export_success">Full app backup saved successfully</string>
 <string name="full_backup_import_title">Restore Hail app backup?</string>
-<string name="full_backup_import_summary">The archive contains %1$d tags, %2$d tracked apps, %3$d app files and %4$d restorable preferences. Tracked apps, tags and matching preferences will be replaced with the saved values; archived app files will be merged. Working mode, biometric login and auto-freeze activation are reset. Android permissions, Shizuku/Dhizuku grants, device-owner status, shortcuts pinned by the launcher, queued delayed freeze/unfreeze jobs and actual freeze states are not included. Reconfigure permissions and working mode after restore. Files not present in the archive are kept. The ZIP is not encrypted; store it privately.</string>
+<string name="full_backup_import_summary">The archive contains %1$d tags, %2$d tracked apps, %3$d app files and %4$d restorable preferences (schema v%5$d). Tracked apps, tags and matching preferences will be replaced with the saved values; archived app files will be merged. Working mode, biometric login and auto-freeze activation are reset. Android permissions, Shizuku/Dhizuku grants, device-owner status, shortcuts pinned by the launcher, queued delayed freeze/unfreeze jobs and actual freeze states are not included. Reconfigure permissions and working mode after restore. Files not present in the archive are kept. The ZIP is not encrypted; store it privately.</string>
 <string name="full_backup_import_confirm">Restore backup</string>
 <string name="full_backup_import_success">Full backup restored. Reconfigure working mode and required permissions.</string>
 <string name="tag_manage_apps">Manage category apps</string>
@@ -249,4 +249,11 @@
     <string name="rule_delete">Delete rule</string>
     <string name="rule_toggle">Enable / disable rule</string>
     <string name="rule_deleted">Rule deleted</string>
+
+    <string name="enhanced_navigation">Navigation and lists</string>
+    <string name="full_backup_select_categories">Tags and tracked applications are always included. Choose whether to include additional app files and supported preferences.</string>
+    <string name="full_backup_additional_files">Additional app files</string>
+    <string name="full_backup_preferences">Supported preferences</string>
+    <string name="full_backup_mode_merge">Merge: keep files not present in the archive</string>
+    <string name="full_backup_mode_replace">Replace: remove app files and restorable preferences not present in the archive</string>
 </resources>

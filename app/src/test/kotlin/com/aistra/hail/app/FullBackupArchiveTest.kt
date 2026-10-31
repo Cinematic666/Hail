@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import java.util.zip.ZipInputStream
 
 class FullBackupArchiveTest {
     private val tagsJson = """[{"tag":"Default","id":0},{"tag":"Work","id":101}]"""
@@ -126,6 +127,68 @@ class FullBackupArchiveTest {
         assertThrows(IllegalArgumentException::class.java) {
             FullBackupArchive.decode(ByteArrayInputStream(archive))
         }
+    }
+
+    @Test
+    fun schemaV2DetectsModifiedArchiveEntries() {
+        val original = FullBackupArchive.encode(
+            files = files,
+            preferences = mapOf("app_theme" to "theme_dark"),
+            applicationId = "com.aistra.hail.enhanced",
+            versionName = "1.12-test",
+            versionCode = 112000
+        )
+        val tampered = ByteArrayOutputStream()
+        ZipInputStream(ByteArrayInputStream(original)).use { input ->
+            ZipOutputStream(tampered).use { output ->
+                while (true) {
+                    val entry = input.nextEntry ?: break
+                    val bytes = input.readBytes()
+                    output.putNextEntry(ZipEntry(entry.name))
+                    if (entry.name == "files/notes/state.json") {
+                        output.write(bytes + byteArrayOf(0x21))
+                    } else {
+                        output.write(bytes)
+                    }
+                    output.closeEntry()
+                }
+            }
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FullBackupArchive.decode(ByteArrayInputStream(tampered.toByteArray()))
+        }
+    }
+
+    @Test
+    fun selectiveExportAlwaysKeepsCoreTagState() {
+        val bytes = FullBackupArchive.encode(
+            files = files,
+            preferences = mapOf("app_theme" to "theme_dark"),
+            applicationId = "com.aistra.hail.enhanced",
+            versionName = "test",
+            versionCode = 1,
+            selection = FullBackupSelection(
+                includeAdditionalFiles = false,
+                includePreferences = false
+            )
+        )
+        val payload = FullBackupArchive.decode(ByteArrayInputStream(bytes))
+        assertEquals(2, payload.schemaVersion)
+        assertEquals(setOf("v1/tags.json", "v1/apps.json"), payload.files.map { it.path }.toSet())
+        assertTrue(payload.preferences.isEmpty())
+    }
+
+    @Test
+    fun legacyV1ArchiveRemainsReadable() {
+        val archive = rawArchive(
+            entries = listOf(
+                "files/v1/tags.json" to tagsJson,
+                "files/v1/apps.json" to appsJson
+            )
+        )
+        val payload = FullBackupArchive.decode(ByteArrayInputStream(archive))
+        assertEquals(1, payload.schemaVersion)
+        assertEquals("com.example.legacy", payload.sourceApplicationId)
     }
 
     @Test
