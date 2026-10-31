@@ -23,6 +23,7 @@ class HailApp : Application() {
         if (!HTarget.S) setAppTheme(HailData.appTheme)
         if (HailData.workingMode.startsWith(HailData.DHIZUKU)) HDhizuku.init()
         // Reconcile interrupted operations from the persistent journal. Never replay commands.
+        runCatching { FullBackupStorage.recoverInterruptedRestore() }
         runCatching { AppManager.recoverPendingFreezeOperations() }
     }
 

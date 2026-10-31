@@ -1,5 +1,6 @@
 package com.aistra.hail.app
 
+import com.aistra.hail.enhanced.domain.BackupEntryMetadata
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedInputStream
@@ -7,23 +8,46 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 internal data class FullBackupFile(val path: String, val bytes: ByteArray)
 
+internal data class FullBackupSelection(
+    /** Tags and tracked-app assignments are always included to preserve a valid Hail state. */
+    val includeAdditionalFiles: Boolean = true,
+    val includePreferences: Boolean = true,
+    val preferenceKeys: Set<String>? = null
+)
+
+internal enum class FullBackupRestoreMode { MERGE, REPLACE }
+
 internal data class FullBackupPayload(
     val files: List<FullBackupFile>,
     val preferences: Map<String, Any>,
     val tagBackup: TagBackup,
     val sourceApplicationId: String,
-    val sourceVersionName: String
+    val sourceVersionName: String,
+    val schemaVersion: Int
+)
+
+internal data class FullBackupPreview(
+    val schemaVersion: Int,
+    val sourceApplicationId: String,
+    val sourceVersionName: String,
+    val tagCount: Int,
+    val trackedAppCount: Int,
+    val fileCount: Int,
+    val preferenceCount: Int,
+    val fileNames: List<String>
 )
 
 internal object FullBackupArchive {
     private const val FORMAT = "com.aistra.hail.full-backup"
-    private const val SCHEMA_VERSION = 1
+    private const val SCHEMA_VERSION = 2
+    private const val LEGACY_SCHEMA_VERSION = 1
     private const val MAX_ENTRIES = 256
     private const val MAX_FILE_BYTES = 8 * 1024 * 1024
     private const val MAX_TOTAL_FILE_BYTES = 40 * 1024 * 1024
@@ -32,6 +56,7 @@ internal object FullBackupArchive {
     private const val MAX_KEY_LENGTH = 256
     private const val MAX_STRING_LENGTH = 8192
     private const val MAX_SET_ITEMS = 256
+    private val requiredStateFiles = setOf("v1/tags.json", "v1/apps.json")
 
     // These values are tied to Android permissions or device-local cryptographic material.
     // They must be configured again after restore instead of being copied from a backup.
@@ -47,11 +72,36 @@ internal object FullBackupArchive {
         preferences: Map<String, *>,
         applicationId: String,
         versionName: String,
-        versionCode: Int
+        versionCode: Int,
+        selection: FullBackupSelection = FullBackupSelection()
     ): ByteArray {
-        val normalizedFiles = validateFiles(files)
-        val tagBackup = decodeTagBackup(normalizedFiles)
-        val safePreferences = normalizePreferences(preferences)
+        val allFiles = validateFiles(files)
+        val normalizedFiles = if (selection.includeAdditionalFiles) allFiles else {
+            allFiles.filter { it.path in requiredStateFiles }
+        }
+        val selectedPreferences = if (selection.includePreferences) {
+            preferences.filterKeys { key ->
+                selection.preferenceKeys == null || key in selection.preferenceKeys
+            }
+        } else emptyMap<String, Any>()
+        val safePreferences = normalizePreferences(selectedPreferences)
+        val preferencesBytes = encodePreferences(safePreferences)
+            .toString().toByteArray(StandardCharsets.UTF_8)
+
+        val entriesForHash = linkedMapOf<String, ByteArray>()
+        entriesForHash["preferences.json"] = preferencesBytes
+        normalizedFiles.sortedBy { it.path }.forEach { file ->
+            entriesForHash["files/" + file.path] = file.bytes
+        }
+        val manifestEntries = JSONArray()
+        entriesForHash.forEach { (name, bytes) ->
+            manifestEntries.put(
+                JSONObject()
+                    .put("name", name)
+                    .put("size", bytes.size)
+                    .put("sha256", sha256(bytes))
+            )
+        }
 
         val manifest = JSONObject()
             .put("format", FORMAT)
@@ -62,23 +112,23 @@ internal object FullBackupArchive {
             .put("createdAtEpochMs", System.currentTimeMillis())
             .put("fileCount", normalizedFiles.size)
             .put("preferenceCount", safePreferences.size)
+            .put("entries", manifestEntries)
 
         val output = ByteArrayOutputStream()
         ZipOutputStream(output).use { zip ->
             zip.writeEntry("manifest.json", manifest.toString().toByteArray(StandardCharsets.UTF_8))
-            zip.writeEntry(
-                "preferences.json",
-                encodePreferences(safePreferences).toString().toByteArray(StandardCharsets.UTF_8)
-            )
+            zip.writeEntry("preferences.json", preferencesBytes)
             normalizedFiles.sortedBy { it.path }.forEach { file ->
-                zip.writeEntry("files/${file.path}", file.bytes)
+                zip.writeEntry("files/" + file.path, file.bytes)
             }
         }
+        require(output.size() <= MAX_TOTAL_ARCHIVE_BYTES) { "Backup archive is too large" }
         return output.toByteArray()
     }
 
     fun decode(input: InputStream): FullBackupPayload {
         val files = linkedMapOf<String, ByteArray>()
+        val archiveEntryBytes = linkedMapOf<String, ByteArray>()
         var manifestText: String? = null
         var preferencesText: String? = null
         var totalBytes = 0
@@ -103,14 +153,16 @@ internal object FullBackupArchive {
                         entry.name == "preferences.json" -> {
                             require(preferencesText == null) { "Backup contains duplicate preferences.json" }
                             preferencesText = String(bytes, StandardCharsets.UTF_8)
+                            archiveEntryBytes[entry.name] = bytes
                         }
                         entry.name.startsWith("files/") -> {
                             val path = entry.name.removePrefix("files/")
                             validateRelativePath(path)
                             require(!files.containsKey(path)) { "Backup contains duplicate file: $path" }
                             files[path] = bytes
+                            archiveEntryBytes[entry.name] = bytes
                         }
-                        else -> throw IllegalArgumentException("Unsupported backup entry: ${entry.name}")
+                        else -> throw IllegalArgumentException("Unsupported backup entry: " + entry.name)
                     }
                 }
                 zip.closeEntry()
@@ -118,11 +170,13 @@ internal object FullBackupArchive {
         }
 
         val manifest = JSONObject(manifestText ?: throw IllegalArgumentException("manifest.json is missing"))
-        validateManifest(manifest)
+        val schemaVersion = validateManifest(manifest)
+        if (schemaVersion >= SCHEMA_VERSION) validateHashes(manifest, archiveEntryBytes)
+
         val preferenceJson = JSONObject(
             preferencesText ?: throw IllegalArgumentException("preferences.json is missing")
         )
-        val decodedPreferences = decodePreferences(preferenceJson)
+        val decodedPreferences = decodePreferences(preferenceJson, schemaVersion)
         val normalizedFiles = validateFiles(files.map { FullBackupFile(it.key, it.value) })
         val tagBackup = decodeTagBackup(normalizedFiles)
         require(manifest.optInt("fileCount", -1) == normalizedFiles.size) {
@@ -137,19 +191,60 @@ internal object FullBackupArchive {
             preferences = decodedPreferences,
             tagBackup = tagBackup,
             sourceApplicationId = manifest.optString("applicationId", "unknown"),
-            sourceVersionName = manifest.optString("versionName", "unknown")
+            sourceVersionName = manifest.optString("versionName", "unknown"),
+            schemaVersion = schemaVersion
         )
     }
 
-    private fun validateManifest(manifest: JSONObject) {
+    fun preview(input: InputStream): FullBackupPreview {
+        val payload = decode(input)
+        return FullBackupPreview(
+            schemaVersion = payload.schemaVersion,
+            sourceApplicationId = payload.sourceApplicationId,
+            sourceVersionName = payload.sourceVersionName,
+            tagCount = payload.tagBackup.tags.size,
+            trackedAppCount = payload.tagBackup.apps.size,
+            fileCount = payload.files.size,
+            preferenceCount = payload.preferences.size,
+            fileNames = payload.files.map { it.path }.sorted()
+        )
+    }
+
+    internal fun isAllowedPreferenceKey(key: String): Boolean = isAllowedPreferenceKeyInternal(key)
+
+    private fun validateManifest(manifest: JSONObject): Int {
         require(manifest.optString("format") == FORMAT) { "This is not a Hail full backup" }
-        require(manifest.optInt("schemaVersion", -1) == SCHEMA_VERSION) {
+        val version = manifest.optInt("schemaVersion", -1)
+        require(version == LEGACY_SCHEMA_VERSION || version == SCHEMA_VERSION) {
             "Unsupported Hail full-backup version"
         }
         require(manifest.optLong("createdAtEpochMs", 0L) > 0L) {
             "Backup manifest has no valid creation time"
         }
+        return version
     }
+
+    private fun validateHashes(manifest: JSONObject, entries: Map<String, ByteArray>) {
+        val metadata = manifest.optJSONArray("entries")
+            ?: throw IllegalArgumentException("Backup entry hashes are missing")
+        require(metadata.length() == entries.size) { "Backup entry hash count does not match the archive" }
+        val seen = HashSet<String>()
+        for (index in 0 until metadata.length()) {
+            val item = metadata.getJSONObject(index)
+            val name = item.getString("name")
+            val size = item.getLong("size")
+            val hash = item.getString("sha256")
+            BackupEntryMetadata.validate(name, size, hash)
+            require(seen.add(name)) { "Duplicate hash entry: " + name }
+            val bytes = entries[name] ?: throw IllegalArgumentException("Missing archive entry: " + name)
+            require(bytes.size.toLong() == size) { "Backup entry size mismatch: " + name }
+            require(sha256(bytes) == hash) { "Backup entry checksum mismatch: " + name }
+        }
+        require(seen == entries.keys) { "Backup contains entries not listed in its manifest" }
+    }
+
+    private fun sha256(bytes: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     private fun validateFiles(files: List<FullBackupFile>): List<FullBackupFile> {
         require(files.isNotEmpty()) { "Backup contains no app files" }
@@ -158,12 +253,12 @@ internal object FullBackupArchive {
         var totalBytes = 0
         files.forEach { file ->
             validateRelativePath(file.path)
-            require(paths.add(file.path)) { "Duplicate app file: ${file.path}" }
-            require(file.bytes.size <= MAX_FILE_BYTES) { "App file is too large: ${file.path}" }
+            require(paths.add(file.path)) { "Duplicate app file: " + file.path }
+            require(file.bytes.size <= MAX_FILE_BYTES) { "App file is too large: " + file.path }
             totalBytes += file.bytes.size
             require(totalBytes <= MAX_TOTAL_FILE_BYTES) { "App data is too large to back up" }
         }
-        require("v1/tags.json" in paths && "v1/apps.json" in paths) {
+        require(paths.containsAll(requiredStateFiles)) {
             "Hail app data is incomplete: tags.json or apps.json is missing"
         }
         return files
@@ -197,7 +292,7 @@ internal object FullBackupArchive {
         require(preferences.size <= MAX_PREFERENCES * 2) { "Too many app preferences" }
         val result = linkedMapOf<String, Any>()
         preferences.toSortedMap().forEach { (key, value) ->
-            if (!isAllowedPreferenceKey(key)) return@forEach
+            if (!isAllowedPreferenceKeyInternal(key)) return@forEach
             val normalized: Any? = when (value) {
                 is String -> value.takeIf { it.length <= MAX_STRING_LENGTH }
                 is Boolean, is Int, is Long -> value
@@ -214,7 +309,7 @@ internal object FullBackupArchive {
         return result
     }
 
-    private fun isAllowedPreferenceKey(key: String): Boolean {
+    private fun isAllowedPreferenceKeyInternal(key: String): Boolean {
         if (key.isBlank() || key.length > MAX_KEY_LENGTH || key in excludedPreferenceKeys) return false
         val normalized = key.lowercase()
         return sensitiveKeyFragments.none { it in normalized }
@@ -242,8 +337,8 @@ internal object FullBackupArchive {
         return JSONObject().put("schemaVersion", SCHEMA_VERSION).put("entries", entries)
     }
 
-    private fun decodePreferences(json: JSONObject): Map<String, Any> {
-        require(json.optInt("schemaVersion", -1) == SCHEMA_VERSION) {
+    private fun decodePreferences(json: JSONObject, manifestVersion: Int): Map<String, Any> {
+        require(json.optInt("schemaVersion", -1) == manifestVersion) {
             "Unsupported preferences backup version"
         }
         val entries = json.optJSONArray("entries")
@@ -254,29 +349,29 @@ internal object FullBackupArchive {
         for (index in 0 until entries.length()) {
             val entry = entries.getJSONObject(index)
             val key = entry.getString("key")
-            require(isAllowedPreferenceKey(key)) { "Backup contains a protected preference" }
-            require(!result.containsKey(key)) { "Backup contains duplicate preference: $key" }
+            require(isAllowedPreferenceKeyInternal(key)) { "Backup contains a protected preference" }
+            require(!result.containsKey(key)) { "Backup contains duplicate preference: " + key }
             val value = entry.get("value")
             val decoded: Any = when (entry.getString("type")) {
                 "string" -> (value as? String)?.also {
                     require(it.length <= MAX_STRING_LENGTH) { "Preference value is too long" }
-                } ?: throw IllegalArgumentException("Invalid string preference: $key")
+                } ?: throw IllegalArgumentException("Invalid string preference: " + key)
                 "boolean" -> value as? Boolean
-                    ?: throw IllegalArgumentException("Invalid boolean preference: $key")
+                    ?: throw IllegalArgumentException("Invalid boolean preference: " + key)
                 "int" -> (value as? Number)?.toInt()
-                    ?: throw IllegalArgumentException("Invalid integer preference: $key")
+                    ?: throw IllegalArgumentException("Invalid integer preference: " + key)
                 "long" -> (value as? Number)?.toLong()
-                    ?: throw IllegalArgumentException("Invalid long preference: $key")
+                    ?: throw IllegalArgumentException("Invalid long preference: " + key)
                 "float" -> {
                     val number = (value as? Number)?.toFloat()
-                        ?: throw IllegalArgumentException("Invalid float preference: $key")
-                    require(number.isFinite()) { "Invalid float preference: $key" }
+                        ?: throw IllegalArgumentException("Invalid float preference: " + key)
+                    require(number.isFinite()) { "Invalid float preference: " + key }
                     number
                 }
                 "set" -> {
                     val array = value as? JSONArray
-                        ?: throw IllegalArgumentException("Invalid string-set preference: $key")
-                    require(array.length() <= MAX_SET_ITEMS) { "String set is too large: $key" }
+                        ?: throw IllegalArgumentException("Invalid string-set preference: " + key)
+                    require(array.length() <= MAX_SET_ITEMS) { "String set is too large: " + key }
                     buildSet {
                         for (itemIndex in 0 until array.length()) {
                             val item = array.getString(itemIndex)
@@ -285,7 +380,7 @@ internal object FullBackupArchive {
                         }
                     }
                 }
-                else -> throw IllegalArgumentException("Unsupported preference type for $key")
+                else -> throw IllegalArgumentException("Unsupported preference type for " + key)
             }
             result[key] = decoded
         }

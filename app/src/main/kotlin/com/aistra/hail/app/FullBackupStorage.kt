@@ -4,15 +4,20 @@ import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.aistra.hail.BuildConfig
 import com.aistra.hail.HailApp.Companion.app
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.security.MessageDigest
 
 internal object FullBackupStorage {
     private const val TAGS_PATH = "v1/tags.json"
     private const val APPS_PATH = "v1/apps.json"
+    private const val RECOVERY_DIR = "hail-full-restore"
+    private const val SNAPSHOT_NAME = "pre-restore.zip"
+    private const val JOURNAL_NAME = "journal.json"
 
-    fun createArchive(): ByteArray {
+    fun createArchive(selection: FullBackupSelection = FullBackupSelection()): ByteArray {
         HailData.saveTags()
         HailData.saveApps()
 
@@ -35,28 +40,117 @@ internal object FullBackupStorage {
             preferences = PreferenceManager.getDefaultSharedPreferences(app).all,
             applicationId = BuildConfig.APPLICATION_ID,
             versionName = BuildConfig.VERSION_NAME,
-            versionCode = BuildConfig.VERSION_CODE
+            versionCode = BuildConfig.VERSION_CODE,
+            selection = selection
         )
     }
 
-    fun restore(payload: FullBackupPayload) {
+    /**
+     * The pre-restore snapshot and journal live in noBackupFilesDir, outside the exported app
+     * data. If Android kills the process mid-restore, startup restores this snapshot before
+     * allowing another operation. The journal never contains device permissions or freeze state.
+     */
+    fun restore(
+        payload: FullBackupPayload,
+        mode: FullBackupRestoreMode = FullBackupRestoreMode.MERGE
+    ) {
+        val recovery = recoveryDirectory()
+        if (!recovery.exists() && !recovery.mkdirs()) throw IOException("Could not create restore recovery directory")
+        val snapshotFile = File(recovery, SNAPSHOT_NAME)
+        val journalFile = File(recovery, JOURNAL_NAME)
+        val snapshotBytes = createArchive()
+        writeAtomically(snapshotFile, snapshotBytes)
+        val snapshotHash = sha256(snapshotBytes)
+        writeAtomically(
+            journalFile,
+            JSONObject()
+                .put("state", "APPLYING")
+                .put("snapshot", SNAPSHOT_NAME)
+                .put("sha256", snapshotHash)
+                .put("createdAtEpochMs", System.currentTimeMillis())
+                .toString().toByteArray()
+        )
+
+        try {
+            applyPayload(payload, mode)
+            writeAtomically(
+                journalFile,
+                JSONObject().put("state", "COMMITTED").put("sha256", snapshotHash).toString().toByteArray()
+            )
+            cleanupRecovery(recovery)
+        } catch (error: Exception) {
+            runCatching {
+                val rollback = FullBackupArchive.decode(snapshotBytes.inputStream())
+                applyPayload(rollback, FullBackupRestoreMode.REPLACE)
+            }
+            cleanupRecovery(recovery)
+            throw error
+        }
+    }
+
+    fun recoverInterruptedRestore() {
+        val recovery = recoveryDirectory()
+        val journalFile = File(recovery, JOURNAL_NAME)
+        val snapshotFile = File(recovery, SNAPSHOT_NAME)
+        if (!journalFile.isFile) {
+            cleanupRecovery(recovery)
+            return
+        }
+        val journal = runCatching { JSONObject(journalFile.readText()) }.getOrNull()
+        when (journal?.optString("state")) {
+            "COMMITTED" -> cleanupRecovery(recovery)
+            "APPLYING" -> {
+                require(snapshotFile.isFile) { "Restore recovery snapshot is missing" }
+                val bytes = snapshotFile.readBytes()
+                require(sha256(bytes) == journal.optString("sha256")) {
+                    "Restore recovery snapshot checksum mismatch"
+                }
+                val rollback = FullBackupArchive.decode(bytes.inputStream())
+                applyPayload(rollback, FullBackupRestoreMode.REPLACE)
+                cleanupRecovery(recovery)
+            }
+            else -> throw IllegalStateException("Restore recovery journal is invalid")
+        }
+    }
+
+    private fun applyPayload(payload: FullBackupPayload, mode: FullBackupRestoreMode) {
         val root = app.filesDir.canonicalFile
         val rootPrefix = root.path + File.separator
         val filesToRestore = payload.files.filterNot { it.path == TAGS_PATH || it.path == APPS_PATH }
+        val archivePaths = payload.files.mapTo(HashSet()) { it.path }
         val previousFiles = linkedMapOf<String, ByteArray?>()
         val preferences = PreferenceManager.getDefaultSharedPreferences(app)
         val previousPreferences = preferences.all
         val previousTagsAndApps = HailData.createTagBackup()
 
         try {
+            if (mode == FullBackupRestoreMode.REPLACE) {
+                root.walkTopDown().filter { it.isFile }.forEach { file ->
+                    val canonical = file.canonicalFile
+                    require(canonical.path.startsWith(rootPrefix)) { "Unsafe replace target" }
+                    val relative = canonical.relativeTo(root).path.replace(File.separatorChar, '/')
+                    if (relative !in archivePaths) {
+                        previousFiles[relative] = canonical.readBytes()
+                        check(canonical.delete()) { "Could not remove app data file: " + relative }
+                    }
+                }
+            }
+
             filesToRestore.forEach { backupFile ->
                 val target = File(root, backupFile.path).canonicalFile
                 require(target.path.startsWith(rootPrefix)) { "Unsafe restore path" }
-                previousFiles[backupFile.path] = target.takeIf { it.isFile }?.readBytes()
+                if (backupFile.path !in previousFiles) {
+                    previousFiles[backupFile.path] = target.takeIf { it.isFile }?.readBytes()
+                }
                 writeAtomically(target, backupFile.bytes)
             }
 
             val editor = preferences.edit()
+            if (mode == FullBackupRestoreMode.REPLACE) {
+                preferences.all.keys
+                    .filter { FullBackupArchive.isAllowedPreferenceKey(it) && it !in payload.preferences }
+                    .forEach(editor::remove)
+            }
             payload.preferences.forEach { (key, value) -> editor.putTyped(key, value) }
             // Device-bound permissions and Keystore-backed biometric state cannot be restored.
             editor.putString(HailData.WORKING_MODE, HailData.MODE_DEFAULT)
@@ -72,11 +166,7 @@ internal object FullBackupStorage {
                     if (bytes == null) target.delete() else writeAtomically(target, bytes)
                 }
             }
-            rollbackPreferences(
-                preferences,
-                previousPreferences,
-                payload.preferences.keys
-            )
+            rollbackPreferences(preferences, previousPreferences, payload.preferences.keys)
             runCatching { HailData.restoreFullBackup(previousTagsAndApps) }
             throw error
         }
@@ -111,21 +201,26 @@ internal object FullBackupStorage {
             else -> this
         }
 
+    private fun recoveryDirectory() = File(app.noBackupFilesDir, RECOVERY_DIR)
+
+    private fun cleanupRecovery(directory: File) {
+        directory.deleteRecursively()
+    }
+
+    private fun sha256(bytes: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
     private fun writeAtomically(target: File, bytes: ByteArray) {
         val parent = target.parentFile ?: throw IOException("Restore target has no parent directory")
         if (!parent.exists() && !parent.mkdirs()) throw IOException("Could not create restore directory")
-        val temporary = File.createTempFile(".${target.name}.", ".restore.tmp", parent)
+        val temporary = File.createTempFile("." + target.name + ".", ".restore.tmp", parent)
         try {
             FileOutputStream(temporary).use { output ->
                 output.write(bytes)
                 output.fd.sync()
             }
-            if (target.exists() && !target.delete()) {
-                throw IOException("Could not replace ${target.name}")
-            }
-            if (!temporary.renameTo(target)) {
-                throw IOException("Could not write ${target.name}")
-            }
+            if (target.exists() && !target.delete()) throw IOException("Could not replace " + target.name)
+            if (!temporary.renameTo(target)) throw IOException("Could not write " + target.name)
         } finally {
             if (temporary.exists()) temporary.delete()
         }
