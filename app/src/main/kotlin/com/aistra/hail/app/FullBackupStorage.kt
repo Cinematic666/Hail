@@ -72,7 +72,11 @@ internal object FullBackupStorage {
                     if (bytes == null) target.delete() else writeAtomically(target, bytes)
                 }
             }
-            rollbackPreferences(preferences, previousPreferences)
+            rollbackPreferences(
+                preferences,
+                previousPreferences,
+                payload.preferences.keys
+            )
             runCatching { HailData.restoreFullBackup(previousTagsAndApps) }
             throw error
         }
