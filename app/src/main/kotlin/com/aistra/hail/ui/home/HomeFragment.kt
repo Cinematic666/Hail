@@ -176,11 +176,11 @@ class HomeFragment : MainFragment() {
                     lifecycleScope.launch {
                         try {
                             FullBackupStorage.restore(payload)
-                            app.setAppTheme(HailData.appTheme)
+                            refreshTags(0)
                             app.setAutoFreezeServiceEnabled(false)
                             HShortcuts.removeAllDynamicShortcuts()
                             HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)
-                            refreshTags(0)
+                            app.setAppTheme(HailData.appTheme)
                             Toast.makeText(
                                 requireContext(),
                                 R.string.full_backup_import_success,
