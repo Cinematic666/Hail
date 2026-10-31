@@ -65,4 +65,5 @@ Testing: :app:testDebugUnitTest :app:assembleRelease.
 
 - Preserve the selected category by its stable tag ID when edited categories are reordered.
 - Preserve apps added by another operation while a tag-editing session was open; do not silently strip their assignments.
+- Remove from the home list only apps newly left without tags by this edit, not unrelated pre-existing untagged entries.
 - Save behavior remains staged; this is an isolated development build, not a stable release.
