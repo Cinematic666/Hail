@@ -61,6 +61,10 @@ jobs:
           echo "HAIL_SIGNING_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
+      - name: Compile release variant without publishing a debug-signed APK
+        if: steps.signing.outputs.ready != 'true'
+        run: ./gradlew --no-daemon :app:assembleRelease
+
       - name: Build permanently signed release APK
         if: steps.signing.outputs.ready == 'true'
         env:
