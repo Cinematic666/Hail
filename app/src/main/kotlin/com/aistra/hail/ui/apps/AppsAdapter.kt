@@ -70,6 +70,12 @@ class AppsAdapter : ListAdapter<ApplicationInfo, AppsAdapter.ViewHolder>(DIFF) {
             val frozen = AppManager.isAppFrozen(pkg)
 
             binding.appIcon.apply {
+                val baseSize = resources.getDimensionPixelSize(com.aistra.hail.R.dimen.app_icon_size)
+                val targetSize = if (HailData.compactAppList) (baseSize * 0.75f).toInt() else baseSize
+                layoutParams = layoutParams.apply {
+                    width = targetSize
+                    height = targetSize
+                }
                 loadIconJob = AppIconCache.loadIconBitmapAsync(
                     context, info, HPackages.myUserId, this, HailData.grayscaleIcon && frozen
                 )
@@ -86,7 +92,14 @@ class AppsAdapter : ListAdapter<ApplicationInfo, AppsAdapter.ViewHolder>(DIFF) {
                 else setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
             }
             binding.appDesc.apply {
-                text = pkg
+                val statuses = buildList {
+                    if (info.flags and ApplicationInfo.FLAG_INSTALLED == 0) add(context.getString(com.aistra.hail.R.string.state_uninstalled))
+                    if (!info.enabled) add(context.getString(com.aistra.hail.R.string.state_disabled))
+                    if (runCatching { HPackages.isAppHidden(pkg) }.getOrDefault(false)) add(context.getString(com.aistra.hail.R.string.state_hidden))
+                    if (runCatching { HPackages.isAppSuspended(pkg) }.getOrDefault(false)) add(context.getString(com.aistra.hail.R.string.state_suspended))
+                }
+                text = (listOf(pkg) + statuses).joinToString(" · ")
+                maxLines = if (HailData.compactAppList) 1 else 2
                 isEnabled = !HailData.grayscaleIcon || !frozen
             }
             binding.appStar.isChecked = HailData.isChecked(pkg)

@@ -93,7 +93,7 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
         }
         binding.recyclerView.apply {
             activity.appbar.setLiftOnScrollTargetView(this)
-            layoutManager = GridLayoutManager(activity, resources.getInteger(R.integer.apps_span))
+            layoutManager = GridLayoutManager(activity, HailData.appListSpanCount)
             adapter = appsAdapter
             applyDefaultInsetter { paddingRelative(isRtl, bottom = isLandscape) }
             registerForContextMenu(this)
@@ -121,6 +121,12 @@ class AppsFragment : MainFragment(), AppsAdapter.OnItemClickListener, AppsAdapte
         }
 
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (binding.recyclerView.layoutManager as? GridLayoutManager)?.spanCount = HailData.appListSpanCount
+        model.updateAppList()
     }
 
     override fun onItemClick(buttonView: CompoundButton) {

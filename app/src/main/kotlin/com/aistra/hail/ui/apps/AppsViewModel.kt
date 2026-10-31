@@ -13,6 +13,7 @@ import kotlinx.coroutines.*
 
 class AppsViewModel(application: Application) : AndroidViewModel(application) {
     val apps = MutableLiveData<List<ApplicationInfo>>()
+    val discovery = MutableLiveData<List<com.aistra.hail.app.DiscoveredApp>>()
     val isRefreshing = MutableLiveData(false)
     val query = MutableLiveData("")
     val displayApps = MutableLiveData<List<ApplicationInfo>>()
@@ -58,7 +59,13 @@ class AppsViewModel(application: Application) : AndroidViewModel(application) {
     fun updateAppList() {
         viewModelScope.launch {
             postRefreshState(true)
-            apps.postValue(HPackages.getInstalledApplications())
+            val inventory = withContext(Dispatchers.IO) {
+                com.aistra.hail.app.PackageDiscoveryRepository(getApplication<HailApp>())
+                    .queryCurrentUser()
+            }
+            discovery.postValue(inventory)
+            apps.postValue(inventory.map { it.applicationInfo })
+            postRefreshState(false)
         }
     }
 
