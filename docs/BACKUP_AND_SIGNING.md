@@ -49,7 +49,14 @@ The helper \`tools/export_legacy_hail_backup.py\` uses root access to read the o
 
    For the original upstream package, use \`--package com.aistra.hail\`.
 
-5. Keep \`Hail-Enhanced-Migration-Backup.zip\` outside the app's private storage. The script checks the ZIP and prints its SHA-256 hash.
+5. Make the archive visible to Android's file picker:
+
+   \`\`\`sh
+   termux-setup-storage
+   mv Hail-Enhanced-Migration-Backup.zip ~/storage/shared/Download/
+   \`\`\`
+
+6. Keep the ZIP in Download or another location outside the app's private storage. The script checks the ZIP and prints its SHA-256 hash.
 
 The exporter includes the app's \`files/\` directory (including \`v1/tags.json\` and \`v1/apps.json\`) and supported values from the default SharedPreferences XML. It deliberately excludes working mode, biometric login, auto-freeze activation and preference keys that look like credentials.
 
