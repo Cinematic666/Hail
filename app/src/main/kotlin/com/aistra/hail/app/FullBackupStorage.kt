@@ -84,10 +84,11 @@ internal object FullBackupStorage {
 
     private fun rollbackPreferences(
         preferences: SharedPreferences,
-        previous: Map<String, *>
+        previous: Map<String, *>,
+        restoredKeys: Set<String>
     ) {
         val editor = preferences.edit()
-        val affectedKeys = previous.keys + setOf(
+        val affectedKeys = restoredKeys + setOf(
             HailData.WORKING_MODE,
             HailData.BIOMETRIC_LOGIN,
             HailData.AUTO_FREEZE_AFTER_LOCK
