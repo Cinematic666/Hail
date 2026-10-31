@@ -35,9 +35,11 @@ PACKAGE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$"
 
 
 def safe_relative(name: str) -> str:
-    normalized = name.replace("\\", "/").lstrip("./")
+    normalized = name.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
     path = PurePosixPath(normalized)
-    if not normalized or path.is_absolute() or any(part in ("", ".", "..") for part in path.parts):
+    if not normalized or normalized.startswith("/") or path.is_absolute() or any(part in ("", ".", "..") for part in path.parts):
         raise ValueError(f"Unsafe app-data path: {name}")
     if len(normalized) > 512:
         raise ValueError(f"App-data path is too long: {name}")
