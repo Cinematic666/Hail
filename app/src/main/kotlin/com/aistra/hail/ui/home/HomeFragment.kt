@@ -178,7 +178,6 @@ class HomeFragment : MainFragment() {
                             FullBackupStorage.restore(payload)
                             refreshTags(0)
                             app.setAutoFreezeServiceEnabled(false)
-                            HShortcuts.removeAllDynamicShortcuts()
                             HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)
                             app.setAppTheme(HailData.appTheme)
                             Toast.makeText(
