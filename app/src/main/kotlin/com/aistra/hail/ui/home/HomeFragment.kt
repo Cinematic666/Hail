@@ -182,57 +182,79 @@ class HomeFragment : MainFragment() {
             }
 
             if (!isAdded) return@launch
-            var selectedRestoreMode = FullBackupRestoreMode.MERGE
+            val selectedCategories = booleanArrayOf(true, true)
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.full_backup_import_title)
-                .setMessage(
-                    getString(
-                        R.string.full_backup_import_summary,
-                        payload.tagBackup.tags.size,
-                        payload.tagBackup.apps.size,
-                        payload.files.size,
-                        payload.preferences.size,
-                        payload.schemaVersion
-                    )
-                )
-                .setSingleChoiceItems(
+                .setMessage(R.string.full_backup_select_restore_categories)
+                .setMultiChoiceItems(
                     arrayOf(
-                        getString(R.string.full_backup_mode_merge),
-                        getString(R.string.full_backup_mode_replace)
+                        getString(R.string.full_backup_additional_files),
+                        getString(R.string.full_backup_preferences)
                     ),
-                    0
-                ) { _, which ->
-                    selectedRestoreMode = if (which == 0) {
-                        FullBackupRestoreMode.MERGE
-                    } else {
-                        FullBackupRestoreMode.REPLACE
+                    selectedCategories
+                ) { _, which, checked -> selectedCategories[which] = checked }
+                .setPositiveButton(R.string.action_continue) { _, _ ->
+                    val selectedFiles = if (selectedCategories[0]) payload.files else {
+                        payload.files.filter { it.path == "v1/tags.json" || it.path == "v1/apps.json" }
                     }
-                }
-                .setPositiveButton(R.string.full_backup_import_confirm) { _, _ ->
-                    lifecycleScope.launch {
-                        try {
-                            FullBackupStorage.restore(payload, selectedRestoreMode)
-                            refreshTags(0)
-                            app.setAutoFreezeService(false)
-                            HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)
-                            Toast.makeText(
-                                app,
-                                R.string.full_backup_import_success,
-                                Toast.LENGTH_LONG
-                            ).show()
-                            app.setAppTheme(HailData.appTheme)
-                        } catch (error: Exception) {
-                            Toast.makeText(
-                                requireContext(),
-                                getString(R.string.tag_backup_error, error.message ?: error.javaClass.simpleName),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
+                    val selectedPayload = payload.copy(
+                        files = selectedFiles,
+                        preferences = if (selectedCategories[1]) payload.preferences else emptyMap()
+                    )
+                    confirmFullBackupRestore(selectedPayload)
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
         }
+    }
+
+    private fun confirmFullBackupRestore(payload: FullBackupPayload) {
+        var selectedRestoreMode = FullBackupRestoreMode.MERGE
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.full_backup_import_title)
+            .setMessage(
+                getString(
+                    R.string.full_backup_import_summary,
+                    payload.tagBackup.tags.size,
+                    payload.tagBackup.apps.size,
+                    payload.files.size,
+                    payload.preferences.size,
+                    payload.schemaVersion
+                )
+            )
+            .setSingleChoiceItems(
+                arrayOf(
+                    getString(R.string.full_backup_mode_merge),
+                    getString(R.string.full_backup_mode_replace)
+                ),
+                0
+            ) { _, which ->
+                selectedRestoreMode = if (which == 0) {
+                    FullBackupRestoreMode.MERGE
+                } else {
+                    FullBackupRestoreMode.REPLACE
+                }
+            }
+            .setPositiveButton(R.string.full_backup_import_confirm) { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        FullBackupStorage.restore(payload, selectedRestoreMode)
+                        refreshTags(0)
+                        app.setAutoFreezeService(false)
+                        HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)
+                        Toast.makeText(app, R.string.full_backup_import_success, Toast.LENGTH_LONG).show()
+                        app.setAppTheme(HailData.appTheme)
+                    } catch (error: Exception) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.tag_backup_error, error.message ?: error.javaClass.simpleName),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun writeTagBackup(uri: Uri) {

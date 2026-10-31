@@ -593,12 +593,46 @@ class SettingsFragment : MainFragment(), MenuProvider {
             .setItems(rules.map { it.name + if (it.enabled) " ✓" else " (off)" }.toTypedArray()) { _, index ->
                 rules.getOrNull(index)?.let(::showRuleActions)
             }
-            .setPositiveButton(R.string.rule_add_screen_off) { _, _ -> createScreenOffRule() }
+            .setPositiveButton(R.string.rule_add) { _, _ -> chooseRuleTrigger() }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
-    private fun createScreenOffRule() {
+    private fun chooseRuleTrigger() {
+        val triggers = arrayOf(
+            getString(R.string.rule_trigger_screen_off),
+            getString(R.string.rule_trigger_charging),
+            getString(R.string.rule_trigger_not_charging)
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.rule_add)
+            .setItems(triggers) { _, which ->
+                val trigger = when (which) {
+                    0 -> RuleTrigger.SCREEN_OFF
+                    1 -> RuleTrigger.CHARGING
+                    else -> RuleTrigger.NOT_CHARGING
+                }
+                chooseRuleAction(trigger)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun chooseRuleAction(trigger: RuleTrigger) {
+        val actions = arrayOf(
+            getString(R.string.rule_action_freeze),
+            getString(R.string.rule_action_unfreeze)
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.rule_add)
+            .setItems(actions) { _, which ->
+                createRule(trigger, if (which == 0) RuleAction.FREEZE else RuleAction.UNFREEZE)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun createRule(trigger: RuleTrigger, action: RuleAction) {
         val packages = HailData.checkedList
             .filter { it.packageName != app.packageName }
             .map { it.packageName }
@@ -607,13 +641,21 @@ class SettingsFragment : MainFragment(), MenuProvider {
             HUI.showToast(R.string.rule_no_tracked_apps)
             return
         }
+        val triggerName = when (trigger) {
+            RuleTrigger.SCREEN_OFF -> getString(R.string.rule_trigger_screen_off)
+            RuleTrigger.CHARGING -> getString(R.string.rule_trigger_charging)
+            RuleTrigger.NOT_CHARGING -> getString(R.string.rule_trigger_not_charging)
+        }
+        val actionName = if (action == RuleAction.FREEZE) {
+            getString(R.string.rule_action_freeze)
+        } else getString(R.string.rule_action_unfreeze)
         val store = FreezeRuleStore(requireContext())
         val rule = FreezeRule(
             id = UUID.randomUUID().toString(),
-            name = getString(R.string.rule_add_screen_off),
+            name = triggerName + " — " + actionName,
             enabled = true,
-            trigger = RuleTrigger.SCREEN_OFF,
-            action = RuleAction.FREEZE,
+            trigger = trigger,
+            action = action,
             packageNames = packages,
             cooldownMillis = 30_000L
         )

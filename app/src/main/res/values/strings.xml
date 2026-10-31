@@ -234,7 +234,7 @@
     <string name="profile_applied">Profile applied: %1$s</string>
     <string name="profile_apply">Apply profile</string>
     <string name="profile_apply_anyway">Apply despite conflicts</string>
-    <string name="profile_conflicts">This profile has %1$d conflicting package assignments across saved profiles. Applying it will use this profile's states for those packages. Continue?</string>
+    <string name="profile_conflicts">This profile has %1$d conflicting package assignments across saved profiles. Applying will use the selected profile state for those packages. Continue?</string>
     <string name="profile_shortcut">Add dynamic shortcut</string>
     <string name="profile_pin_shortcut">Pin to home screen</string>
     <string name="profile_delete">Delete profile</string>
@@ -256,4 +256,12 @@
     <string name="full_backup_preferences">Supported preferences</string>
     <string name="full_backup_mode_merge">Merge: keep files not present in the archive</string>
     <string name="full_backup_mode_replace">Replace: remove app files and restorable preferences not present in the archive</string>
+
+    <string name="full_backup_select_restore_categories">Tags and tracked applications are always restored. Choose whether to restore additional app files and supported preferences.</string>
+    <string name="rule_add">Add automation rule</string>
+    <string name="rule_trigger_screen_off">When screen turns off</string>
+    <string name="rule_trigger_charging">When charging starts</string>
+    <string name="rule_trigger_not_charging">When charging stops</string>
+    <string name="rule_action_freeze">Freeze tracked applications</string>
+    <string name="rule_action_unfreeze">Unfreeze tracked applications</string>
 </resources>

@@ -73,7 +73,7 @@ internal object FreezeProfileManager {
 
     fun delete(context: Context, profileId: String) {
         FreezeProfileStore(context).delete(profileId)
-        val preferences = context.getSharedPreferences("hail_enhanced_profiles", Context.MODE_PRIVATE)
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
         if (preferences.getString(ACTIVE_PROFILE, null) == profileId) {
             preferences.edit().remove(ACTIVE_PROFILE).commit()
         }
