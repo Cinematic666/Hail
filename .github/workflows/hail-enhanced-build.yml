@@ -57,6 +57,7 @@ jobs:
           printf '%s' "$HAIL_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
           test -s "$KEYSTORE_PATH"
           chmod 600 "$KEYSTORE_PATH"
+          keytool -list -keystore "$KEYSTORE_PATH" -storetype JKS -storepass "$HAIL_SIGNING_STORE_PASSWORD" -alias "$HAIL_SIGNING_KEY_ALIAS" >/dev/null
           echo "HAIL_SIGNING_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
@@ -74,7 +75,10 @@ jobs:
         run: |
           APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
           test -n "$APK"
-          keytool -printcert -jarfile "$APK"
+          ACTUAL_FINGERPRINT="$(keytool -printcert -jarfile "$APK" | awk -F': ' '/SHA256:/{print $2; exit}')"
+          EXPECTED_FINGERPRINT="AE:3C:A1:22:8D:75:91:7A:56:1A:A9:8E:FA:4B:59:59:AF:77:09:5E:1D:08:9D:26:67:3B:55:67:AF:A6:48:CB"
+          test "$ACTUAL_FINGERPRINT" = "$EXPECTED_FINGERPRINT"
+          echo "Verified certificate: $ACTUAL_FINGERPRINT"
           sha256sum "$APK"
 
       - name: Upload permanently signed APK
