@@ -1,6 +1,6 @@
-# Hail Enhanced — v1.11.0-enhanced.8 test build
+# Hail Enhanced — v1.11.0-enhanced.9
 
-Unofficial parallel-install test build based on upstream Hail v1.11.0.
+Unofficial Enhanced build based on upstream Hail v1.11.0. This branch prepares permanent APK signing and full app-data backup/restore. The application ID remains `com.aistra.hail.enhanced`.
 
 ## What changed
 
@@ -24,7 +24,7 @@ Run:
 ./gradlew :app:testDebugUnitTest :app:assembleRelease
 ```
 
-The release variant uses the Gradle debug signing key when no private signing configuration is supplied. This is a test build, not an official signed release.
+For local builds, Gradle uses a debug key unless a local `signing.properties` or `HAIL_SIGNING_*` environment variables are supplied. GitHub Actions only builds/uploads the release APK when all permanent signing secrets are configured; otherwise it runs unit tests and skips release packaging. See [Backup and signing](docs/BACKUP_AND_SIGNING.md).
 
 ## Upstream and license
 
@@ -59,6 +59,17 @@ This release integrates the upstream `main` snapshot `67a43c8ea7d43eddf51d840f36
 - No working-mode changes or freeze commands are executed from the redesigned category editor.
 - Home-screen overflow actions are visible immediately; only backup import/export are nested.
 - Preserves existing tag IDs, legacy JSON format and backup import/export.
+
+## Enhanced.9 — permanent signing and full backup
+
+- Adds full app backup/restore for app-private files, tracked apps, tags, pin/whitelist flags and supported preferences.
+- Adds archive schema validation, size limits, ZIP path traversal protection, duplicate-entry rejection and best-effort rollback.
+- Excludes working mode, biometric login and auto-freeze activation from portable preferences; Android permissions and system freeze states are never replayed.
+- Adds a root-assisted one-time migration exporter for existing debug-signed installs.
+- Adds permanent release signing through GitHub Actions secrets. The release workflow refuses to fall back to a debug certificate.
+- Keeps the application ID unchanged for future stable updates. The first transition from Enhanced.7/.8 requires an external migration archive and one uninstall/reinstall because the earlier builds used different temporary debug certificates.
+
+See [docs/BACKUP_AND_SIGNING.md](docs/BACKUP_AND_SIGNING.md) for the migration procedure, secret names and backup scope.
 
 ## Enhanced.8 — compact navigation
 
