@@ -93,16 +93,15 @@ class FullBackupArchiveTest {
     }
 
     @Test
-    fun duplicateFileEntriesAreRejected() {
-        val archive = rawArchive(
-            entries = listOf(
-                "files/v1/tags.json" to tagsJson,
-                "files/v1/apps.json" to appsJson,
-                "files/v1/tags.json" to tagsJson
-            )
-        )
+    fun duplicateFilePathsAreRejectedBeforeExport() {
         assertThrows(IllegalArgumentException::class.java) {
-            FullBackupArchive.decode(ByteArrayInputStream(archive))
+            FullBackupArchive.encode(
+                files = files + FullBackupFile("v1/tags.json", tagsJson.toByteArray()),
+                preferences = emptyMap<String, Any>(),
+                applicationId = "com.aistra.hail.enhanced",
+                versionName = "test",
+                versionCode = 1
+            )
         }
     }
 
