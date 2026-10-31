@@ -22,6 +22,8 @@ class HailApp : Application() {
         // DirtyDataUpdater.update(app)
         if (!HTarget.S) setAppTheme(HailData.appTheme)
         if (HailData.workingMode.startsWith(HailData.DHIZUKU)) HDhizuku.init()
+        // Reconcile interrupted operations from the persistent journal. Never replay commands.
+        runCatching { AppManager.recoverPendingFreezeOperations() }
     }
 
     fun setAutoFreezeService(autoFreezeAfterLock: Boolean = HailData.autoFreezeAfterLock, context: Context = app) {

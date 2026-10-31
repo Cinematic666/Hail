@@ -70,9 +70,9 @@ internal object RuleEngine {
                 !rule.enabled -> "Rule is disabled"
                 rule.trigger != event.trigger -> "Trigger does not match"
                 eventKey in processed -> "Event was already processed"
-                nowEpochMs < (state.lastRunAtByRule[rule.id] ?: Long.MIN_VALUE) -> "Clock moved backwards"
-                nowEpochMs - (state.lastRunAtByRule[rule.id] ?: Long.MIN_VALUE) < rule.cooldownMillis ->
-                    "Rule cooldown has not elapsed"
+                state.lastRunAtByRule[rule.id]?.let { lastRun ->
+                    nowEpochMs < lastRun || nowEpochMs - lastRun < rule.cooldownMillis
+                } == true -> "Rule cooldown has not elapsed"
                 else -> null
             }
             if (reason != null) {

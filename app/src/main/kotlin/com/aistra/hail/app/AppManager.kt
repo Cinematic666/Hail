@@ -30,28 +30,24 @@ object AppManager {
         }
     }
 
-    fun setListFrozen(frozen: Boolean, vararg appInfo: AppInfo): String? {
-        val excludeMe = appInfo.filter { it.packageName != BuildConfig.APPLICATION_ID }
-        var i = 0
-        var denied = false
-        var name = String()
-        when (HailData.workingMode) {
-            // call setListFrozen for some batch-style working mode here
-            // fallback to setAppFrozen otherwise
-            else -> {
-                excludeMe.forEach {
-                    when {
-                        setAppFrozen(it.packageName, frozen) -> {
-                            i++
-                            name = it.name.toString()
-                        }
+    fun executeVerified(packageNames: Collection<String>, frozen: Boolean) =
+        FreezeControllerFacade.execute(packageNames, frozen)
 
-                        it.applicationInfo != null -> denied = true
-                    }
-                }
-            }
+    fun setListFrozen(frozen: Boolean, vararg appInfo: AppInfo): String? {
+        val eligible = appInfo.filter { it.packageName != BuildConfig.APPLICATION_ID }
+        if (eligible.isEmpty()) return "0"
+        val results = executeVerified(eligible.map { it.packageName }, frozen)
+        val successful = results.count {
+            it.outcome == com.aistra.hail.enhanced.domain.FreezeOutcome.SUCCESS && it.stateVerified
         }
-        return if (denied && i == 0) null else if (i == 1) name else i.toString()
+        if (successful == 0) return null
+        if (successful == 1 && eligible.size == 1) return eligible.single().name.toString()
+        return if (successful < eligible.size) successful.toString() + "/" + eligible.size
+        else successful.toString()
+    }
+
+    internal fun recoverPendingFreezeOperations() {
+        FreezeControllerFacade.recoverPending()
     }
 
     fun setAppFrozen(packageName: String, frozen: Boolean): Boolean =
