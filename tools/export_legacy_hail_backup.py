@@ -192,11 +192,11 @@ def create_archive(
     package: str,
     output: Path
 ) -> tuple[int, str]:
-    if "v1/tags.json" not in files or "v1/apps.json" not in files:
-        raise ValueError(
-            "The app data is incomplete: files/v1/tags.json or files/v1/apps.json is missing"
-        )
-    if not files or len(files) > 254:
+    files = dict(files)
+    # A never-used Hail install may not have written these lazy-loaded defaults yet.
+    files.setdefault("v1/tags.json", b'[{"tag":"Default","id":0}]')
+    files.setdefault("v1/apps.json", b"[]")
+    if len(files) > 254:
         raise ValueError("Unexpected number of app-data files")
     manifest = {
         "format": FORMAT,
