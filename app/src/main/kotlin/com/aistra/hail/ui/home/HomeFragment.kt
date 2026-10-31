@@ -12,8 +12,12 @@ import androidx.lifecycle.lifecycleScope
 import com.aistra.hail.BuildConfig
 import com.aistra.hail.R
 import com.aistra.hail.app.AppInfo
+import com.aistra.hail.app.FullBackupArchive
+import com.aistra.hail.app.FullBackupStorage
 import com.aistra.hail.app.HailData
 import com.aistra.hail.app.TagBackupArchive
+import com.aistra.hail.HailApp.Companion.app
+import com.aistra.hail.utils.HShortcuts
 import com.aistra.hail.app.HailData.tags
 import com.aistra.hail.databinding.FragmentHomeBinding
 import com.aistra.hail.extensions.applyDefaultInsetter
@@ -42,6 +46,16 @@ class HomeFragment : MainFragment() {
     private val importTagBackupLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             uri?.let(::readTagBackup)
+        }
+
+    private val exportFullBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            uri?.let(::writeFullBackup)
+        }
+
+    private val importFullBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let(::readFullBackup)
         }
 
     override fun onCreateView(
@@ -89,6 +103,101 @@ class HomeFragment : MainFragment() {
         importTagBackupLauncher.launch(
             arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")
         )
+    }
+
+    fun launchFullBackupExport() {
+        exportFullBackupLauncher.launch("Hail-Enhanced-Full-Backup.zip")
+    }
+
+    fun launchFullBackupImport() {
+        importFullBackupLauncher.launch(
+            arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream")
+        )
+    }
+
+    private fun writeFullBackup(uri: Uri) {
+        val resolver = requireContext().contentResolver
+        lifecycleScope.launch {
+            try {
+                val bytes = withContext(Dispatchers.IO) { FullBackupStorage.createArchive() }
+                withContext(Dispatchers.IO) {
+                    val output = resolver.openOutputStream(uri, "wt")
+                        ?: throw IOException("Could not open the selected destination")
+                    output.use { it.write(bytes) }
+                }
+                if (isAdded) {
+                    Toast.makeText(requireContext(), R.string.full_backup_export_success, Toast.LENGTH_LONG).show()
+                }
+            } catch (error: Exception) {
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.tag_backup_error, error.message ?: error.javaClass.simpleName),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun readFullBackup(uri: Uri) {
+        val resolver = requireContext().contentResolver
+        lifecycleScope.launch {
+            val payload = try {
+                withContext(Dispatchers.IO) {
+                    val input = resolver.openInputStream(uri)
+                        ?: throw IOException("Could not open the selected backup")
+                    input.use(FullBackupArchive::decode)
+                }
+            } catch (error: Exception) {
+                if (isAdded) {
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.tag_backup_error, error.message ?: error.javaClass.simpleName),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                return@launch
+            }
+
+            if (!isAdded) return@launch
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.full_backup_import_title)
+                .setMessage(
+                    getString(
+                        R.string.full_backup_import_summary,
+                        payload.tagBackup.tags.size,
+                        payload.tagBackup.apps.size,
+                        payload.files.size,
+                        payload.preferences.size
+                    )
+                )
+                .setPositiveButton(R.string.full_backup_import_confirm) { _, _ ->
+                    lifecycleScope.launch {
+                        try {
+                            withContext(Dispatchers.IO) { FullBackupStorage.restore(payload) }
+                            app.setAppTheme(HailData.appTheme)
+                            app.setAutoFreezeServiceEnabled(false)
+                            HShortcuts.removeAllDynamicShortcuts()
+                            HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)
+                            refreshTags(0)
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.full_backup_import_success,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } catch (error: Exception) {
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.tag_backup_error, error.message ?: error.javaClass.simpleName),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
     }
 
     private fun writeTagBackup(uri: Uri) {
