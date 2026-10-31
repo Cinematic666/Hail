@@ -133,6 +133,28 @@ object HailData {
         ACTION_LOCK_FREEZE
     )
 
+    const val NAVIGATION_LAYOUT = "navigation_layout"
+    const val NAV_AUTO = "auto"
+    const val NAV_BOTTOM = "bottom"
+    const val NAV_RAIL = "rail"
+    const val NAV_BOTTOM_COMPACT = "bottom_compact"
+    const val NAV_RAIL_COMPACT = "rail_compact"
+    val NAVIGATION_LAYOUT_VALUES = listOf(
+        NAV_AUTO, NAV_BOTTOM, NAV_RAIL, NAV_BOTTOM_COMPACT, NAV_RAIL_COMPACT
+    )
+
+    const val APP_LIST_LAYOUT = "app_list_layout"
+    const val APP_LIST_STANDARD = "standard"
+    const val APP_LIST_COMPACT = "compact"
+    const val APP_LIST_TWO_COLUMNS = "two_columns"
+    const val APP_LIST_THREE_COLUMNS = "three_columns"
+    const val APP_LIST_FOUR_COLUMNS = "four_columns"
+    val APP_LIST_LAYOUT_VALUES = listOf(
+        APP_LIST_STANDARD, APP_LIST_COMPACT, APP_LIST_TWO_COLUMNS,
+        APP_LIST_THREE_COLUMNS, APP_LIST_FOUR_COLUMNS
+    )
+    const val RULE_ENGINE_ENABLED = "rule_engine_enabled"
+
     private val sp = PreferenceManager.getDefaultSharedPreferences(app)
     val sortBy get() = sp.getString(SORT_BY, SORT_NAME)
     val filterUserApps get() = sp.getBoolean(FILTER_USER_APPS, true)
@@ -158,6 +180,15 @@ object HailData {
     val skipForegroundApp get() = sp.getBoolean(SKIP_FOREGROUND_APP, false)
     val skipNotifyingApp get() = sp.getBoolean(SKIP_NOTIFYING_APP, false)
     val dynamicShortcutAction get() = sp.getString(DYNAMIC_SHORTCUT_ACTION, ACTION_NONE)!!
+    val navigationLayout get() = sp.getString(NAVIGATION_LAYOUT, NAV_AUTO)!!
+    val appListLayout get() = sp.getString(APP_LIST_LAYOUT, APP_LIST_STANDARD)!!
+    val appListSpanCount get() = when (appListLayout) {
+        APP_LIST_TWO_COLUMNS -> 2
+        APP_LIST_THREE_COLUMNS -> 3
+        APP_LIST_FOUR_COLUMNS -> 4
+        else -> 1
+    }
+    val compactAppList get() = appListLayout == APP_LIST_COMPACT
 
     private val dir = "${app.filesDir.path}/v1"
     private val appsPath = "$dir/apps.json"
