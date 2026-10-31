@@ -166,7 +166,11 @@ internal object FullBackupStorage {
                     if (bytes == null) target.delete() else writeAtomically(target, bytes)
                 }
             }
-            rollbackPreferences(preferences, previousPreferences, payload.preferences.keys)
+            val rollbackKeys = payload.preferences.keys +
+                if (mode == FullBackupRestoreMode.REPLACE) {
+                    previousPreferences.keys.filter { FullBackupArchive.isAllowedPreferenceKey(it) }.toSet()
+                } else emptySet()
+            rollbackPreferences(preferences, previousPreferences, rollbackKeys)
             runCatching { HailData.restoreFullBackup(previousTagsAndApps) }
             throw error
         }

@@ -65,7 +65,6 @@ internal object FreezeProfileEngine {
         validate(listOf(target))
         val relevant = allProfiles.filter { it.id != active?.id && it.id != target.id }
         val conflicts = findConflicts(relevant + target)
-        val conflictedPackages = conflicts.mapTo(HashSet()) { it.packageName }
         val desired = linkedMapOf<String, Boolean>()
         active?.packageStates?.keys?.forEach { packageName ->
             if (packageName !in target.packageStates) desired[packageName] = false
@@ -74,9 +73,7 @@ internal object FreezeProfileEngine {
 
         val skipped = desired.keys.filterTo(LinkedHashSet()) { it in protectedPackages }
         val operations = desired.filter { (packageName, frozen) ->
-            packageName !in skipped &&
-                packageName !in conflictedPackages &&
-                currentStates[packageName] != frozen
+            packageName !in skipped && currentStates[packageName] != frozen
         }
         return ProfilePlan(operations, conflicts, skipped)
     }

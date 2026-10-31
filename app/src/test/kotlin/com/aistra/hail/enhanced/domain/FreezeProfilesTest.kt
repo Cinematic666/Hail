@@ -36,6 +36,6 @@ class FreezeProfilesTest {
         val other = profile("work", mapOf("com.example.app" to false))
         val plan = FreezeProfileEngine.planSwitch(null, target, listOf(target, other), emptyMap())
         assertFalse(plan.isSafe)
-        assertTrue(plan.operations.isEmpty())
+        assertEquals(mapOf("com.example.app" to true), plan.operations)
     }
 }
