@@ -192,6 +192,13 @@
 <string name="tag_backup_import_success">Импортировано тегов: %1$d, привязок приложений: %2$d</string>
 <string name="tag_backup_error">Ошибка операции с резервной копией: %1$s</string>
 <string name="action_backup_menu">Резервное копирование</string>
+<string name="full_backup_export">Создать полную резервную копию</string>
+<string name="full_backup_import">Восстановить полную копию</string>
+<string name="full_backup_export_success">Полная резервная копия успешно сохранена</string>
+<string name="full_backup_import_title">Восстановить данные Hail?</string>
+<string name="full_backup_import_summary">В архиве: %1$d тегов, %2$d отслеживаемых приложений, %3$d файлов приложения и %4$d настроек. Теги, список приложений и настройки из архива будут восстановлены; файлы приложения будут объединены с существующими. Режим работы, биометрический вход и автоматическая заморозка сбрасываются. Разрешения Android, доступ Shizuku/Dhizuku, статус владельца устройства, закреплённые лаунчером ярлыки и фактическое состояние заморозки не входят в копию. После восстановления заново выберите режим работы и выдайте необходимые разрешения. Файлы, отсутствующие в архиве, сохраняются.</string>
+<string name="full_backup_import_confirm">Восстановить</string>
+<string name="full_backup_import_success">Полная копия восстановлена. Настройте режим работы и необходимые разрешения.</string>
 <string name="tag_manage_apps">Управление приложениями категории</string>
 <string name="tag_apps_target">Целевая категория: %1$s</string>
 <string name="tag_source_category">Категория-источник</string>
