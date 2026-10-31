@@ -191,11 +191,7 @@
 <string name="tag_backup_import_confirm">Импортировать</string>
 <string name="tag_backup_import_success">Импортировано тегов: %1$d, привязок приложений: %2$d</string>
 <string name="tag_backup_error">Ошибка операции с резервной копией: %1$s</string>
-<string name="action_tools">Управление</string>
-<string name="menu_category_tags">ТЕГИ И КАТЕГОРИИ</string>
-<string name="menu_category_backup">РЕЗЕРВНОЕ КОПИРОВАНИЕ</string>
-<string name="menu_category_freeze">УПРАВЛЕНИЕ ЗАМОРОЗКОЙ</string>
-<string name="menu_category_apps">СПИСОК ПРИЛОЖЕНИЙ</string>
+<string name="action_backup_menu">Резервное копирование</string>
 <string name="tag_manage_apps">Управление приложениями категории</string>
 <string name="tag_apps_target">Целевая категория: %1$s</string>
 <string name="tag_source_category">Категория-источник</string>
