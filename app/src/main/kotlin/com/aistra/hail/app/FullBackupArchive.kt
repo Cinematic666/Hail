@@ -26,7 +26,7 @@ internal object FullBackupArchive {
     private const val SCHEMA_VERSION = 1
     private const val MAX_ENTRIES = 256
     private const val MAX_FILE_BYTES = 8 * 1024 * 1024
-    private const val MAX_TOTAL_BYTES = 40 * 1024 * 1024
+    private const val MAX_TOTAL_BYTES = 48 * 1024 * 1024
     private const val MAX_PREFERENCES = 512
     private const val MAX_KEY_LENGTH = 256
     private const val MAX_STRING_LENGTH = 8192
