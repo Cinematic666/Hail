@@ -175,7 +175,7 @@ class HomeFragment : MainFragment() {
                 .setPositiveButton(R.string.full_backup_import_confirm) { _, _ ->
                     lifecycleScope.launch {
                         try {
-                            withContext(Dispatchers.IO) { FullBackupStorage.restore(payload) }
+                            FullBackupStorage.restore(payload)
                             app.setAppTheme(HailData.appTheme)
                             app.setAutoFreezeServiceEnabled(false)
                             HShortcuts.removeAllDynamicShortcuts()
