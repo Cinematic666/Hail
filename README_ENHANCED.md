@@ -60,6 +60,14 @@ This release integrates the upstream `main` snapshot `67a43c8ea7d43eddf51d840f36
 - Home-screen overflow actions are visible immediately; only backup import/export are nested.
 - Preserves existing tag IDs, legacy JSON format and backup import/export.
 
+## Enhanced.8 — compact navigation
+
+- Removes the gear button next to category tabs.
+- Long-pressing any category tab opens the category editor; the Default tab stays visible when it is the only category.
+- Shows freeze, import and export actions directly after opening the three-dot menu.
+- Keeps only tag-configuration backup export/import inside the Backup and restore submenu.
+- Preserves the existing action handlers and staged tag-edit save/cancel behavior.
+
 Testing: :app:testDebugUnitTest :app:assembleRelease.
 
 ## Enhanced.7 — save hardening
