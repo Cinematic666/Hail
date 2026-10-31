@@ -280,6 +280,51 @@ object HailData {
         }
     }
 
+    /**
+     * Full restore replaces the tracked app/tag state exactly. Unlike the tag-only importer,
+     * it also restores pin and whitelist flags from the archive.
+     */
+    internal fun restoreFullBackup(backup: TagBackup) {
+        val valid = TagBackupArchive.normalizeAndValidate(backup)
+        val previousTags = tags.toList()
+        val previousApps = checkedList.map {
+            AppInfo(
+                packageName = it.packageName,
+                pinned = it.pinned,
+                whitelisted = it.whitelisted,
+                tagIdList = it.tagIdList.toMutableList()
+            )
+        }
+
+        try {
+            tags.clear()
+            tags.addAll(valid.tags.map { it.name to it.id })
+            checkedList.clear()
+            valid.apps.forEach {
+                checkedList.add(
+                    AppInfo(
+                        packageName = it.packageName,
+                        pinned = it.pinned,
+                        whitelisted = it.whitelisted,
+                        tagIdList = it.tagIds.toMutableList()
+                    )
+                )
+            }
+            saveTags()
+            saveApps()
+        } catch (error: Exception) {
+            tags.clear()
+            tags.addAll(previousTags)
+            checkedList.clear()
+            checkedList.addAll(previousApps)
+            runCatching {
+                saveTags()
+                saveApps()
+            }
+            throw error
+        }
+    }
+
     fun changeAppsSort(sort: String) = sp.edit { putString(SORT_BY, sort) }
 
     fun changeAppsFilter(filter: String, enabled: Boolean) = sp.edit { putBoolean(filter, enabled) }
