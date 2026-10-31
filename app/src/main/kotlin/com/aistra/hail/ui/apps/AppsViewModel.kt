@@ -13,7 +13,7 @@ import kotlinx.coroutines.*
 
 class AppsViewModel(application: Application) : AndroidViewModel(application) {
     val apps = MutableLiveData<List<ApplicationInfo>>()
-    val discovery = MutableLiveData<List<com.aistra.hail.app.DiscoveredApp>>()
+    internal val discovery = MutableLiveData<List<com.aistra.hail.app.DiscoveredApp>>()
     val isRefreshing = MutableLiveData(false)
     val query = MutableLiveData("")
     val displayApps = MutableLiveData<List<ApplicationInfo>>()

@@ -96,7 +96,7 @@ object HShortcuts {
         ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
     }
 
-    fun addProfileShortcut(profile: FreezeProfile) {
+    internal fun addProfileShortcut(profile: FreezeProfile) {
         if (HailData.biometricLogin) return
         val shortcut = ShortcutInfoCompat.Builder(app, "hail-profile-" + profile.id)
             .setIcon(
@@ -111,7 +111,7 @@ object HShortcuts {
         ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
     }
 
-    fun addPinProfileShortcut(profile: FreezeProfile) {
+    internal fun addPinProfileShortcut(profile: FreezeProfile) {
         addPinShortcut(
             AppCompatResources.getDrawable(app, R.drawable.ic_round_frozen_shortcut)!!,
             "hail-profile-pin-" + profile.id,
