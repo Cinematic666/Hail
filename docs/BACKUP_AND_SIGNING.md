@@ -88,9 +88,9 @@ The following are **not** restored:
 - Working mode and device-bound Root/Shizuku/Dhizuku/Device Owner grants.
 - Biometric login (the Android Keystore key cannot be exported).
 - Auto-freeze activation (the service is left disabled until permissions are checked).
-- Android permission grants, launcher-pinned shortcuts and system-level freeze states.
+- Android permission grants, launcher-pinned shortcuts, WorkManager's queued delayed freeze/unfreeze jobs and system-level freeze states.
 
-The restore does not freeze or unfreeze packages. After restore, configure the working mode and permissions manually. The system's current frozen states are left untouched. Keep backup ZIPs in a private location because they include the tracked package list and saved app preferences.
+The restore does not freeze or unfreeze packages. After restore, configure the working mode and permissions manually. The system's current frozen states are left untouched. Pending delayed freeze/unfreeze jobs are not copied; schedule them again if needed. Keep backup ZIPs in a private location because they include the tracked package list and saved app preferences.
 
 The existing tag-only ZIP export/import remains available for compatibility with original Hail archives.
 
