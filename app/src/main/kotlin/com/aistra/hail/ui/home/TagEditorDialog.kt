@@ -273,6 +273,8 @@ class TagEditorDialog(private val home: HomeFragment) {
             sheet.dismiss()
             return
         }
+        // Capture identity before mutating the global tab order; the selected index may move.
+        val chosenId = home.selectedTagId()
         val prevTags = HailData.tags.toList()
         val prevApps = HailData.checkedList.toList()
         val prevAssignments = prevApps.associate { it.packageName to it.tagIdList.toList() }
@@ -281,8 +283,11 @@ class TagEditorDialog(private val home: HomeFragment) {
             HailData.tags.clear()
             HailData.tags.addAll(session.tags)
             HailData.checkedList.forEach { app ->
+                // A package added while this sheet was open is not part of the edit session.
+                // Preserve its existing assignment rather than silently removing it.
+                val editedTags = nextAssignments[app.packageName] ?: return@forEach
                 app.tagIdList.clear()
-                app.tagIdList.addAll(nextAssignments[app.packageName].orEmpty())
+                app.tagIdList.addAll(editedTags)
             }
             HailData.checkedList.removeAll { it.tagIdList.isEmpty() }
             HailData.saveTags()
@@ -305,7 +310,6 @@ class TagEditorDialog(private val home: HomeFragment) {
             ).show()
             return
         }
-        val chosenId = home.selectedTagId()
         home.refreshTags(if (session.tags.any { it.second == chosenId }) chosenId else 0)
         home.refreshAppLists()
         sheet.dismiss()
