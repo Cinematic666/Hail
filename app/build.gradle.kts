@@ -5,6 +5,26 @@ plugins {
 
 android {
     val signingProps = file("../signing.properties")
+    val signingProperties = java.util.Properties().apply {
+        if (signingProps.exists()) load(signingProps.inputStream())
+    }
+    val releaseStoreFile = System.getenv("HAIL_SIGNING_KEYSTORE_PATH")
+        ?: signingProperties.getProperty("storeFile")
+    val releaseStorePassword = System.getenv("HAIL_SIGNING_STORE_PASSWORD")
+        ?: signingProperties.getProperty("storePassword")
+    val releaseKeyAlias = System.getenv("HAIL_SIGNING_KEY_ALIAS")
+        ?: signingProperties.getProperty("keyAlias")
+    val releaseKeyPassword = System.getenv("HAIL_SIGNING_KEY_PASSWORD")
+        ?: signingProperties.getProperty("keyPassword")
+    val releaseSigningReady = listOf(
+        releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword
+    ).all { !it.isNullOrBlank() }
+    if (System.getenv("HAIL_REQUIRE_RELEASE_SIGNING") == "true" && !releaseSigningReady) {
+        throw GradleException(
+            "Release signing is required. Configure HAIL_SIGNING_* environment variables or signing.properties."
+        )
+    }
+
     val commitHash = providers.exec {
         workingDir = rootDir
         commandLine = "git rev-parse --short HEAD".split(" ")
@@ -21,8 +41,8 @@ android {
         applicationId = "com.aistra.hail.enhanced"
         minSdk = 23
         targetSdk = 36
-        versionCode = 111008
-        versionName = "1.11.0-enhanced.8"
+        versionCode = 111009
+        versionName = "1.11.0-enhanced.9"
     }
 
     buildTypes {
@@ -34,13 +54,12 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             if (!commitSubject.startsWith("[release]")) versionNameSuffix = "-g$commitHash"
-            signingConfig = if (signingProps.exists()) {
-                val props = `java.util`.Properties().apply { load(signingProps.reader()) }
+            signingConfig = if (releaseSigningReady) {
                 signingConfigs.create("release") {
-                    storeFile = file(props.getProperty("storeFile"))
-                    storePassword = props.getProperty("storePassword")
-                    keyAlias = props.getProperty("keyAlias")
-                    keyPassword = props.getProperty("keyPassword")
+                    storeFile = file(releaseStoreFile!!)
+                    storePassword = releaseStorePassword
+                    keyAlias = releaseKeyAlias
+                    keyPassword = releaseKeyPassword
                 }
             } else signingConfigs.getByName("debug")
             proguardFiles(
