@@ -63,10 +63,6 @@
     <string name="donate_alipay">Alipay</string>
     <string name="donate_wechat">WeChat Pay</string>
     <string name="donate_wechat_scan">Escanear</string>
-    <string name="donate_bilibili">Bilibili</string>
-    <string name="donate_bilibili_msg">Sígueme en Bilibili.</string>
-    <string name="donate_bilibili_space">Espacio en Bilibili</string>
-    <string name="donate_bilibili_cancel">Cancelar</string>
     <string name="donate_liberapay">Liberapay</string>
     <string name="donate_paypal">PayPal</string>
     <string name="permission_denied">Permiso denegado</string>
@@ -155,4 +151,12 @@
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
     <string name="xposed_description">Permitir que las aplicaciones con ámbito limitado inicien aplicaciones suspendidas</string>
+    <string name="working_mode_tag">Modo de funcionamiento de las aplicaciones relacionadas</string>
+    <string name="state_running">En ejecución</string>
+    <string name="donate_kofi">Ko-fi</string>
+    <string name="state_uninstalled">Desinstalado</string>
+    <string name="state_suspended">Suspendido</string>
+    <string name="state_hidden">Oculto</string>
+    <string name="state_disabled">Desactivado</string>
+    <string name="mode_jailbreak_disable">Jailbreak - Desactivar</string>
 </resources>

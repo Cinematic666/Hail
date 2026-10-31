@@ -1,9 +1,10 @@
-name: Hail Enhanced v1.11.0-enhanced.4 test build
+name: Hail Enhanced v1.11.0-enhanced.5 test build
 
 on:
   push:
     branches:
       - enhanced/tag-editor-v1.11.0
+      - enhanced/roadmap-v1.11.0
   workflow_dispatch:
 
 permissions:
@@ -36,7 +37,7 @@ jobs:
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
-          name: Hail-Enhanced-v1.11.0-enhanced.4-test
+          name: Hail-Enhanced-v1.11.0-enhanced.5-test
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 14

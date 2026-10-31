@@ -1,4 +1,4 @@
-# Hail Enhanced — v1.11.0-enhanced.4 test build
+# Hail Enhanced — v1.11.0-enhanced.5 test build
 
 Unofficial parallel-install test build based on upstream Hail v1.11.0.
 
@@ -44,3 +44,7 @@ To migrate from the original Hail installation without modifying it, use a root-
 Place both files in a ZIP archive (at the root or inside a `v1/` folder), then choose **Home → Tag backup → Import tag configuration** in Hail Enhanced.
 
 Only tag definitions and app-to-tag assignments are imported. For apps already tracked in Enhanced, existing pin and whitelist flags are preserved; newly imported app entries restore those flags from the backup. Frozen states, permissions, working mode, and other preferences are not imported or changed. Apps already in Enhanced but absent from the archive are retained; assignments to tags that no longer exist are moved to Default.
+
+## Enhanced.5 — upstream baseline sync
+
+This release integrates the upstream `main` snapshot `67a43c8ea7d43eddf51d840f3615b97ce6079c9b` into a separate development branch without changing `main` or Enhanced.4. It retains the upstream Jailbreak Disable mode, Settings updates, and translations together with Enhanced tag editing, assignments, backup and parallel-install package name. A new typed operation report is a standalone model only; it is **not yet wired to Root/Shizuku or used for freeze actions**. The real-device safety gate still applies.
