@@ -9,6 +9,7 @@ class ScreenOffReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_SCREEN_OFF) {
             HWork.setAutoFreeze(true)
+            com.aistra.hail.work.RuleScheduler.enqueue(context, com.aistra.hail.enhanced.domain.RuleTrigger.SCREEN_OFF)
         }
     }
 }
