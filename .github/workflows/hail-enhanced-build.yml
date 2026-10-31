@@ -34,7 +34,10 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run unit tests
+      - name: Run migration exporter tests
+        run: python3 -m unittest tools/test_legacy_export_hail_backup.py
+
+      - name: Run Android unit tests
         run: ./gradlew --no-daemon :app:testDebugUnitTest
 
       - name: Prepare permanent release signing
