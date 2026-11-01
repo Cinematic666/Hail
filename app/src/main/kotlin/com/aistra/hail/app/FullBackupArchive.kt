@@ -30,7 +30,8 @@ internal data class FullBackupPayload(
     val tagBackup: TagBackup,
     val sourceApplicationId: String,
     val sourceVersionName: String,
-    val schemaVersion: Int
+    val schemaVersion: Int,
+    val selection: FullBackupSelection = FullBackupSelection()
 )
 
 internal data class FullBackupPreview(
@@ -76,12 +77,14 @@ internal object FullBackupArchive {
         selection: FullBackupSelection = FullBackupSelection()
     ): ByteArray {
         val allFiles = validateFiles(files)
+        val selectedKeys = selection.preferenceKeys?.filterTo(linkedSetOf(), ::isAllowedPreferenceKeyInternal)
+        require(selectedKeys == null || selectedKeys.size <= MAX_PREFERENCES) { "Too many selected preference keys" }
         val normalizedFiles = if (selection.includeAdditionalFiles) allFiles else {
             allFiles.filter { it.path in requiredStateFiles }
         }
         val selectedPreferences = if (selection.includePreferences) {
             preferences.filterKeys { key ->
-                selection.preferenceKeys == null || key in selection.preferenceKeys
+                selectedKeys == null || key in selectedKeys
             }
         } else emptyMap<String, Any>()
         val safePreferences = normalizePreferences(selectedPreferences)
@@ -112,6 +115,11 @@ internal object FullBackupArchive {
             .put("createdAtEpochMs", System.currentTimeMillis())
             .put("fileCount", normalizedFiles.size)
             .put("preferenceCount", safePreferences.size)
+            .put("selection", JSONObject().apply {
+                put("includeAdditionalFiles", selection.includeAdditionalFiles)
+                put("includePreferences", selection.includePreferences)
+                selectedKeys?.let { put("preferenceKeys", JSONArray(it.sorted())) }
+            })
             .put("entries", manifestEntries)
 
         val output = ByteArrayOutputStream()
@@ -186,13 +194,48 @@ internal object FullBackupArchive {
             "Backup preference count does not match its manifest"
         }
 
+        val declaredSelection = manifest.optJSONObject("selection")
+        val selectedKeysJson = declaredSelection?.optJSONArray("preferenceKeys")
+        require(declaredSelection?.has("preferenceKeys") != true || selectedKeysJson != null) {
+            "Invalid selected preference key list"
+        }
+        val selectedKeys = selectedKeysJson?.let { keys ->
+            require(keys.length() <= MAX_PREFERENCES) { "Too many selected preference keys" }
+            buildSet {
+                for (index in 0 until keys.length()) {
+                    val key = keys.getString(index)
+                    require(isAllowedPreferenceKeyInternal(key)) { "Invalid selected preference key" }
+                    add(key)
+                }
+            }
+        }
+        // Earlier archives did not record exclusions. An absent category must not be
+        // interpreted as an instruction to erase that category during replacement.
+        val selection = FullBackupSelection(
+            includeAdditionalFiles = declaredSelection?.getBoolean("includeAdditionalFiles")
+                ?: normalizedFiles.any { it.path !in requiredStateFiles },
+            includePreferences = declaredSelection?.getBoolean("includePreferences")
+                ?: decodedPreferences.isNotEmpty(),
+            preferenceKeys = selectedKeys ?: if (declaredSelection == null) decodedPreferences.keys else null
+        )
+        require(selection.includeAdditionalFiles || normalizedFiles.all { it.path in requiredStateFiles }) {
+            "Backup contains excluded app files"
+        }
+        require(selection.includePreferences || decodedPreferences.isEmpty()) {
+            "Backup contains excluded preferences"
+        }
+        require(selectedKeys == null || decodedPreferences.keys.all { it in selectedKeys }) {
+            "Backup contains unselected preferences"
+        }
+
         return FullBackupPayload(
             files = normalizedFiles,
             preferences = decodedPreferences,
             tagBackup = tagBackup,
             sourceApplicationId = manifest.optString("applicationId", "unknown"),
             sourceVersionName = manifest.optString("versionName", "unknown"),
-            schemaVersion = schemaVersion
+            schemaVersion = schemaVersion,
+            selection = selection
         )
     }
 

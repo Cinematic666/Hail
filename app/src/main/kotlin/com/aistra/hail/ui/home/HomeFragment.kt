@@ -13,6 +13,10 @@ import com.aistra.hail.BuildConfig
 import com.aistra.hail.R
 import com.aistra.hail.app.AppInfo
 import com.aistra.hail.app.FullBackupArchive
+import com.aistra.hail.app.FullBackupPayload
+import com.aistra.hail.app.FullBackupRestoreMode
+import com.aistra.hail.app.FullBackupRestorePlan
+import com.aistra.hail.app.FullBackupSelection
 import com.aistra.hail.app.FullBackupStorage
 import com.aistra.hail.app.HailData
 import com.aistra.hail.app.TagBackupArchive
@@ -111,7 +115,6 @@ class HomeFragment : MainFragment() {
         val selected = booleanArrayOf(true, true)
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.full_backup_export)
-            .setMessage(R.string.full_backup_select_categories)
             .setMultiChoiceItems(
                 arrayOf(
                     getString(R.string.full_backup_additional_files),
@@ -182,10 +185,11 @@ class HomeFragment : MainFragment() {
             }
 
             if (!isAdded) return@launch
-            val selectedCategories = booleanArrayOf(true, true)
+            val selectedCategories = booleanArrayOf(
+                payload.selection.includeAdditionalFiles, payload.selection.includePreferences
+            )
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.full_backup_import_title)
-                .setMessage(R.string.full_backup_select_restore_categories)
                 .setMultiChoiceItems(
                     arrayOf(
                         getString(R.string.full_backup_additional_files),
@@ -194,12 +198,12 @@ class HomeFragment : MainFragment() {
                     selectedCategories
                 ) { _, which, checked -> selectedCategories[which] = checked }
                 .setPositiveButton(R.string.action_continue) { _, _ ->
-                    val selectedFiles = if (selectedCategories[0]) payload.files else {
-                        payload.files.filter { it.path == "v1/tags.json" || it.path == "v1/apps.json" }
-                    }
-                    val selectedPayload = payload.copy(
-                        files = selectedFiles,
-                        preferences = if (selectedCategories[1]) payload.preferences else emptyMap()
+                    val selectedPayload = FullBackupRestorePlan.select(
+                        payload,
+                        FullBackupSelection(
+                            includeAdditionalFiles = selectedCategories[0],
+                            includePreferences = selectedCategories[1]
+                        )
                     )
                     confirmFullBackupRestore(selectedPayload)
                 }
@@ -212,16 +216,6 @@ class HomeFragment : MainFragment() {
         var selectedRestoreMode = FullBackupRestoreMode.MERGE
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.full_backup_import_title)
-            .setMessage(
-                getString(
-                    R.string.full_backup_import_summary,
-                    payload.tagBackup.tags.size,
-                    payload.tagBackup.apps.size,
-                    payload.files.size,
-                    payload.preferences.size,
-                    payload.schemaVersion
-                )
-            )
             .setSingleChoiceItems(
                 arrayOf(
                     getString(R.string.full_backup_mode_merge),
@@ -235,10 +229,32 @@ class HomeFragment : MainFragment() {
                     FullBackupRestoreMode.REPLACE
                 }
             }
+            .setPositiveButton(R.string.action_continue) { _, _ ->
+                showFullBackupRestorePreview(payload, selectedRestoreMode)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showFullBackupRestorePreview(payload: FullBackupPayload, mode: FullBackupRestoreMode) {
+        val modeLabel = getString(
+            if (mode == FullBackupRestoreMode.MERGE) R.string.full_backup_mode_merge
+            else R.string.full_backup_mode_replace
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.full_backup_import_title)
+            .setMessage(modeLabel + "\n\n" + getString(
+                R.string.full_backup_import_summary,
+                payload.tagBackup.tags.size,
+                payload.tagBackup.apps.size,
+                payload.files.size,
+                payload.preferences.size,
+                payload.schemaVersion
+            ))
             .setPositiveButton(R.string.full_backup_import_confirm) { _, _ ->
                 lifecycleScope.launch {
                     try {
-                        FullBackupStorage.restore(payload, selectedRestoreMode)
+                        FullBackupStorage.restore(payload, mode)
                         refreshTags(0)
                         app.setAutoFreezeService(false)
                         HShortcuts.addDynamicShortcutAction(HailData.dynamicShortcutAction)

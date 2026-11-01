@@ -1,4 +1,4 @@
-# Hail Enhanced — v1.11.0-enhanced.9
+# Hail Enhanced — v1.11.0-enhanced.10 development
 
 Unofficial Enhanced build based on upstream Hail v1.11.0. This branch prepares permanent APK signing and full app-data backup/restore. The application ID remains `com.aistra.hail.enhanced`.
 
@@ -17,6 +17,8 @@ Unofficial Enhanced build based on upstream Hail v1.11.0. This branch prepares p
 - Uses the separate application ID `com.aistra.hail.enhanced`; the original Hail app can remain installed.
 
 ## Build
+
+The separate debug package is `com.aistra.hail.enhanced.debug`, labelled **Hail Enhanced Test**. It can be installed beside an existing Enhanced release. Build it with `./gradlew :app:testDebugUnitTest :app:assembleDebug`. This development build does not imply that all modernization features have passed real-device validation. See [Enhanced.10 testing notes](docs/ENHANCED_10_TESTING.md).
 
 Run:
 

@@ -179,6 +179,34 @@ class FullBackupArchiveTest {
     }
 
     @Test
+    fun selectiveExportRecordsExcludedCategoriesForSafeReplacement() {
+        val bytes = FullBackupArchive.encode(
+            files = files,
+            preferences = mapOf("app_theme" to "theme_dark"),
+            applicationId = "com.aistra.hail.enhanced",
+            versionName = "test",
+            versionCode = 1,
+            selection = FullBackupSelection(includeAdditionalFiles = false, includePreferences = false)
+        )
+        val manifest = ZipInputStream(bytes.inputStream()).use { input ->
+            var text: String? = null
+            while (true) {
+                val entry = input.nextEntry ?: break
+                if (entry.name == "manifest.json") text = input.readBytes().toString(StandardCharsets.UTF_8)
+                input.closeEntry()
+            }
+            JSONObject(requireNotNull(text))
+        }
+        val selection = manifest.optJSONObject("selection")
+        assertTrue("Backup must distinguish excluded categories from empty categories", selection != null)
+        assertFalse(selection!!.getBoolean("includeAdditionalFiles"))
+        assertFalse(selection.getBoolean("includePreferences"))
+        val restored = FullBackupArchive.decode(bytes.inputStream())
+        assertFalse(restored.selection.includeAdditionalFiles)
+        assertFalse(restored.selection.includePreferences)
+    }
+
+    @Test
     fun legacyV1ArchiveRemainsReadable() {
         val archive = rawArchive(
             entries = listOf(
@@ -189,6 +217,79 @@ class FullBackupArchiveTest {
         val payload = FullBackupArchive.decode(ByteArrayInputStream(archive))
         assertEquals(1, payload.schemaVersion)
         assertEquals("com.example.legacy", payload.sourceApplicationId)
+        assertFalse(payload.selection.includeAdditionalFiles)
+        assertFalse(payload.selection.includePreferences)
+    }
+
+    @Test
+    fun legacyArchiveWithUnknownPreferenceScopePreservesAbsentPreferences() {
+        val preferences = JSONObject().put("schemaVersion", 1).put("entries", JSONArray().put(
+            JSONObject().put("key", "app_theme").put("type", "string").put("value", "theme_dark")
+        ))
+        val payload = FullBackupArchive.decode(rawArchive(
+            entries = listOf("files/v1/tags.json" to tagsJson, "files/v1/apps.json" to appsJson),
+            preferences = preferences.toString()
+        ).inputStream())
+        assertTrue(FullBackupRestorePlan.preferencesToRemove(
+            payload, FullBackupRestoreMode.REPLACE, setOf("app_theme", "home_font_size")
+        ).isEmpty())
+    }
+
+    @Test
+    fun selectingProtectedPreferenceKeysDoesNotProduceAnUnreadableArchive() {
+        val bytes = FullBackupArchive.encode(
+            files = files,
+            preferences = mapOf("app_theme" to "theme_dark", "working_mode" to "su_disable"),
+            applicationId = "com.aistra.hail.enhanced",
+            versionName = "test",
+            versionCode = 1,
+            selection = FullBackupSelection(preferenceKeys = setOf("app_theme", "working_mode"))
+        )
+        val payload = FullBackupArchive.decode(bytes.inputStream())
+        assertEquals(mapOf("app_theme" to "theme_dark"), payload.preferences)
+        assertEquals(setOf("app_theme"), payload.selection.preferenceKeys)
+    }
+
+    @Test
+    fun explicitlyIncludedEmptyCategoriesCanBeReplaced() {
+        val bytes = FullBackupArchive.encode(
+            files = files.take(2), preferences = emptyMap<String, Any>(),
+            applicationId = "com.aistra.hail.enhanced", versionName = "test", versionCode = 1
+        )
+        val payload = FullBackupArchive.decode(bytes.inputStream())
+        assertEquals(setOf("enhanced/local.json"), FullBackupRestorePlan.filesToDelete(
+            payload, FullBackupRestoreMode.REPLACE, setOf("v1/apps.json", "enhanced/local.json")
+        ))
+        assertEquals(setOf("app_theme"), FullBackupRestorePlan.preferencesToRemove(
+            payload, FullBackupRestoreMode.REPLACE, setOf("app_theme")
+        ))
+    }
+
+    @Test
+    fun metadataLessV2ArchivePreservesUnknownPreferenceScope() {
+        val archive = FullBackupArchive.encode(
+            files, mapOf("app_theme" to "theme_dark"), "com.aistra.hail.enhanced", "test", 1,
+            FullBackupSelection(preferenceKeys = setOf("app_theme"))
+        )
+        val legacy = rewriteManifest(archive) { it.remove("selection") }
+        val payload = FullBackupArchive.decode(legacy.inputStream())
+        assertEquals(2, payload.schemaVersion)
+        assertTrue(FullBackupRestorePlan.preferencesToRemove(
+            payload, FullBackupRestoreMode.REPLACE, setOf("app_theme", "home_font_size")
+        ).isEmpty())
+    }
+
+    @Test
+    fun malformedPreferenceScopeIsRejectedRatherThanTreatedAsAllPreferences() {
+        val archive = FullBackupArchive.encode(
+            files, mapOf("app_theme" to "theme_dark"), "com.aistra.hail.enhanced", "test", 1
+        )
+        val malformed = rewriteManifest(archive) {
+            it.getJSONObject("selection").put("preferenceKeys", "app_theme")
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FullBackupArchive.decode(malformed.inputStream())
+        }
     }
 
     @Test
@@ -203,6 +304,26 @@ class FullBackupArchiveTest {
         assertThrows(IllegalArgumentException::class.java) {
             FullBackupArchive.decode(ByteArrayInputStream(archive))
         }
+    }
+
+    private fun rewriteManifest(archive: ByteArray, change: (JSONObject) -> Unit): ByteArray {
+        val output = ByteArrayOutputStream()
+        ZipInputStream(archive.inputStream()).use { input ->
+            ZipOutputStream(output).use { zip ->
+                while (true) {
+                    val entry = input.nextEntry ?: break
+                    val bytes = input.readBytes()
+                    zip.putNextEntry(ZipEntry(entry.name))
+                    if (entry.name == "manifest.json") {
+                        val manifest = JSONObject(bytes.toString(StandardCharsets.UTF_8))
+                        change(manifest)
+                        zip.write(manifest.toString().toByteArray(StandardCharsets.UTF_8))
+                    } else zip.write(bytes)
+                    zip.closeEntry()
+                }
+            }
+        }
+        return output.toByteArray()
     }
 
     private fun rawArchive(

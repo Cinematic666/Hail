@@ -66,9 +66,8 @@ internal object FreezeProfileEngine {
         val relevant = allProfiles.filter { it.id != active?.id && it.id != target.id }
         val conflicts = findConflicts(relevant + target)
         val desired = linkedMapOf<String, Boolean>()
-        active?.packageStates?.keys?.forEach { packageName ->
-            if (packageName !in target.packageStates) desired[packageName] = false
-        }
+        // Applying a profile changes only its explicit assignments. Packages absent from
+        // the target may have been frozen manually and must not be silently unfrozen.
         target.packageStates.forEach { (packageName, frozen) -> desired[packageName] = frozen }
 
         val skipped = desired.keys.filterTo(LinkedHashSet()) { it in protectedPackages }

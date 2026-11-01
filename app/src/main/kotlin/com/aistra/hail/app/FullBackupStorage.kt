@@ -126,22 +126,23 @@ internal object FullBackupStorage {
         val root = app.filesDir.canonicalFile
         val rootPrefix = root.path + File.separator
         val filesToRestore = payload.files.filterNot { it.path == TAGS_PATH || it.path == APPS_PATH }
-        val archivePaths = payload.files.mapTo(HashSet()) { it.path }
         val previousFiles = linkedMapOf<String, ByteArray?>()
         val preferences = PreferenceManager.getDefaultSharedPreferences(app)
         val previousPreferences = preferences.all
         val previousTagsAndApps = HailData.createTagBackup()
+        val restoredTagState = FullBackupRestorePlan.tagState(previousTagsAndApps, payload.tagBackup, mode)
 
         try {
-            if (mode == FullBackupRestoreMode.REPLACE) {
-                root.walkTopDown().filter { it.isFile }.forEach { file ->
+            if (mode == FullBackupRestoreMode.REPLACE && payload.selection.includeAdditionalFiles) {
+                val existingFiles = root.walkTopDown().filter { it.isFile }.associateBy { file ->
+                    file.canonicalFile.relativeTo(root).path.replace(File.separatorChar, '/')
+                }
+                FullBackupRestorePlan.filesToDelete(payload, mode, existingFiles.keys).forEach { relative ->
+                    val file = existingFiles.getValue(relative)
                     val canonical = file.canonicalFile
                     require(canonical.path.startsWith(rootPrefix)) { "Unsafe replace target" }
-                    val relative = canonical.relativeTo(root).path.replace(File.separatorChar, '/')
-                    if (relative !in archivePaths) {
-                        previousFiles[relative] = canonical.readBytes()
-                        check(canonical.delete()) { "Could not remove app data file: " + relative }
-                    }
+                    previousFiles[relative] = canonical.readBytes()
+                    check(canonical.delete()) { "Could not remove app data file: " + relative }
                 }
             }
 
@@ -155,11 +156,7 @@ internal object FullBackupStorage {
             }
 
             val editor = preferences.edit()
-            if (mode == FullBackupRestoreMode.REPLACE) {
-                preferences.all.keys
-                    .filter { FullBackupArchive.isAllowedPreferenceKey(it) && it !in payload.preferences }
-                    .forEach(editor::remove)
-            }
+            FullBackupRestorePlan.preferencesToRemove(payload, mode, preferences.all.keys).forEach(editor::remove)
             payload.preferences.forEach { (key, value) -> editor.putTyped(key, value) }
             if (resetDeviceBoundPreferences) {
                 // Device-bound permissions and Keystore-backed biometric state cannot be restored.
@@ -169,7 +166,7 @@ internal object FullBackupStorage {
             }
             check(editor.commit()) { "Could not save restored preferences" }
 
-            HailData.restoreFullBackup(payload.tagBackup)
+            HailData.restoreFullBackup(restoredTagState)
         } catch (error: Exception) {
             previousFiles.forEach { (path, bytes) ->
                 runCatching {
